@@ -1,0 +1,5 @@
+/visual
+.vscode
+.idea
+/server/logs
+/client/build
