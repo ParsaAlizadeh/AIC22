@@ -42,6 +42,11 @@ run() {
         | tee logs/stdout.txt
 }
 
+buildrun() {
+    ( build )
+    ( run $@ )
+}
+
 publish() {
     cp "$(agentpath main)" "$(agentpath $1)"
 }
