@@ -10,4 +10,8 @@ namespace Types {
     using Graph = ir::sharif::aic::hideandseek::api::grpc::Graph;
 }
 
+namespace HAS {
+    using namespace ir::sharif::aic::hideandseek::api::grpc;
+}
+
 #endif
