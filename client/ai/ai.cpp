@@ -22,9 +22,10 @@ namespace AI {
             << ")";
     }
 
-    void log_visibles(const GameView &gameView) {
+    void log_turn(const GameView &gameView) {
+        cerr << "turn=" << gameView.turn().turnnumber() << " ";
         const auto visibles = gameView.visible_agents();
-        cerr << visibles.size() << ": ";
+        cerr << "visibles=" << visibles.size() << ": ";
         for (const HAS::Agent &agent : visibles) {
             log_agent(agent);
             cerr << ", ";
@@ -41,12 +42,12 @@ namespace AI {
     }
 
     int thief_move_ai(const GameView &gameView) {
-        log_visibles(gameView);
+        log_turn(gameView);
         return 2;
     }
 
     int police_move_ai(const GameView &gameView) {
-        log_visibles(gameView);
+        log_turn(gameView);
         return 1;
     }
 }
