@@ -29,7 +29,7 @@ agentpath() {
 }
 
 mappath() {
-    echo "$script_path/map/$1.yml"
+    echo "$script_path/map/$1"
 }
 
 run() {
@@ -37,8 +37,8 @@ run() {
     java -jar hideandseek*.jar \
         --first-team="$(agentpath $1)" \
         --second-team="$(agentpath $2)" \
-        "$(mappath $3)" \
-        "./map.json" \
+        "$(mappath $3).yml" \
+        "$(mappath $3).json" \
         | tee logs/stdout.txt
 }
 
