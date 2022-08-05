@@ -4,6 +4,7 @@
 #include "types.h"
 #include "client/client.h"
 #include "graph.h"
+#include "shortestpath.h"
 
 namespace AI {
     using namespace Types;
