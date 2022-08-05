@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "client/client.h"
+#include "graph.h"
 
 namespace AI {
     using namespace Types;

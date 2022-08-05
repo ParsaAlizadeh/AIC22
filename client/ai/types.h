@@ -5,9 +5,6 @@
 
 namespace Types {
     using GameView = ir::sharif::aic::hideandseek::api::grpc::GameView;
-    using Node = ir::sharif::aic::hideandseek::api::grpc::Node;
-    using Path = ir::sharif::aic::hideandseek::api::grpc::Path;
-    using Graph = ir::sharif::aic::hideandseek::api::grpc::Graph;
 }
 
 namespace HAS {

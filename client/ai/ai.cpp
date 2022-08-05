@@ -4,6 +4,7 @@ using namespace std;
 
 namespace AI {
     const Phone* my_phone;
+    const Graph* graph;
 
     void redirect_cerr(int id) {
         string filename = "./logs/client/" + to_string(id) + ".log";
@@ -39,6 +40,7 @@ namespace AI {
         redirect_cerr(me.id());
         log_agent(me);
         cerr << endl;
+        graph = new Graph(gameView.config().graph());
     }
 
     int thief_move_ai(const GameView &gameView) {
