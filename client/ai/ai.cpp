@@ -24,14 +24,7 @@ namespace AI {
     }
 
     void log_turn(const GameView &gameView) {
-        cerr << "turn=" << gameView.turn().turnnumber() << " ";
-        const auto visibles = gameView.visible_agents();
-        cerr << "visibles=" << visibles.size() << ": ";
-        for (const HAS::Agent &agent : visibles) {
-            log_agent(agent);
-            cerr << ", ";
-        }
-        cerr << endl;
+        cerr << "turn=" << gameView.turn().turnnumber() << endl;
     }
 
     void initialize(const GameView &gameView, const Phone &phone) {
