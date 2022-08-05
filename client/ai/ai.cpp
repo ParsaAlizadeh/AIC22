@@ -11,7 +11,7 @@ namespace AI {
     }
 
     int get_thief_starting_node(const GameView &gameView) {
-        return 270;
+        return 2;
     }
 
     void log_agent(const HAS::Agent &agent) {
