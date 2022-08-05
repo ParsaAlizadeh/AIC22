@@ -40,6 +40,7 @@ run() {
         "$(mappath $3).yml" \
         "$(mappath $3).json" \
         | tee logs/stdout.txt
+    mv logs/server.log "logs/server_$(date +"%Y_%m_%d_%H_%M_%S").log"
 }
 
 buildrun() {
