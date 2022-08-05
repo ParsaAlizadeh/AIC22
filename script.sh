@@ -34,7 +34,7 @@ mappath() {
 
 run() {
     cd server/
-    java -jar hideandseek-0.0.8.jar \
+    java -jar hideandseek-*.jar \
         --first-team="$(agentpath $1)" \
         --second-team="$(agentpath $2)" \
         "$(mappath $3).yml" \
