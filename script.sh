@@ -34,12 +34,17 @@ mappath() {
 
 run() {
     cd server/
-    java -jar hideandseek*.jar \
+    java -jar hideandseek-0.0.8.jar \
         --first-team="$(agentpath $1)" \
         --second-team="$(agentpath $2)" \
         "$(mappath $3).yml" \
         "$(mappath $3).json" \
         | tee logs/stdout.txt
+}
+
+buildrun() {
+    ( build )
+    ( run $@ )
 }
 
 publish() {
