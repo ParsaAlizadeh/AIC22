@@ -7,8 +7,7 @@
 using namespace std;
 
 struct ShortestPath {
-    int start_node;
     vector<int> dist, first, last;
     ShortestPath(int n);
-    void update(const Graph* graph, int start_node, bool use_price);
+    void update(const Graph* graph, const vector<int> &start_nodes, bool use_price);
 };

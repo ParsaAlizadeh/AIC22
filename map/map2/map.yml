@@ -71,7 +71,7 @@ agents:
     team: SECOND
     type: POLICE
     balance: 100.0
-    
+
 income:
   policeIncomeEachTurn: 10
   thiefIncomeEachTurn: 10
