@@ -40,27 +40,31 @@ vector<HAS::Agent> get_enemies(const GameView &gameView) {
     return enemies;
 }
 
-namespace AI {
-    const Phone* my_phone;
-    const Graph* graph;
-    ShortestPath* shortestpath;
-
-    int get_thief_starting_node(const GameView &gameView) {
+struct AIAgent {
+    virtual void initialize(const GameView &gameView) {}
+    virtual int starting_node(const GameView &gameView) {
+        cerr << "bad" << endl;
         return 2;
-    }
+    };
+    virtual int turn(const GameView &gameView) {
+        cerr << "bad" << endl;
+        return 2;
+    };
+};
 
-    void initialize(const GameView &gameView, const Phone &phone) {
-        my_phone = &phone;
-        auto me = gameView.viewer();
-        redirect_cerr(me.id());
-        log_agent(me);
-        cerr << endl;
-        graph = new Graph(gameView.config().graph());
+const AI::Phone* my_phone;
+const Graph* graph;
+AIAgent* aiagent;
+
+struct AIThief : AIAgent {
+    ShortestPath* shortestpath;
+    void initialize(const GameView &gameView) {
         shortestpath = new ShortestPath(graph->n);
     }
-
-    int thief_move_ai(const GameView &gameView) {
-        log_turn(gameView);
+    int starting_node(const GameView &gameView) {
+        return 2;
+    }
+    int turn(const GameView &gameView) {
         int current_node = gameView.viewer().node_id();
         vector<int> node_options;
         for (const auto &edge : graph->adj[current_node]) {
@@ -81,9 +85,42 @@ namespace AI {
         }
         return node_options[argmax(scores.begin(), scores.end())];
     }
+};
+
+struct AIPolice : AIAgent {
+    int turn(const GameView &gameView) {
+        return 1;
+    }
+};
+
+namespace AI {
+    void initialize(const GameView &gameView, const Phone &phone) {
+        my_phone = &phone;
+        auto me = gameView.viewer();
+        redirect_cerr(me.id());
+        log_agent(me);
+        cerr << endl;
+        graph = new Graph(gameView.config().graph());
+        if (me.type() == HAS::AgentType::POLICE)
+            aiagent = new AIPolice();
+        else
+            aiagent = new AIThief();
+        aiagent->initialize(gameView);
+    }
+
+    int get_thief_starting_node(const GameView &gameView) {
+        int node = aiagent->starting_node(gameView);
+        cerr << "start from " << node << endl;
+        return node;
+    }
+
+    int thief_move_ai(const GameView &gameView) {
+        log_turn(gameView);
+        return aiagent->turn(gameView);
+    }
 
     int police_move_ai(const GameView &gameView) {
         log_turn(gameView);
-        return 1;
+        return aiagent->turn(gameView);
     }
 }

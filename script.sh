@@ -35,6 +35,7 @@ mappath() {
 
 run() {
     cd server/
+    rm -f logs/details.log
     java -jar hideandseek-*.jar \
         --first-team="$(agentpath $1)" \
         --second-team="$(agentpath $2)" \

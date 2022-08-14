@@ -105,13 +105,13 @@ namespace Client {
         void perform_initialize(const GameView &gameView) const {
             const auto &viewer = gameView.viewer();
             int start_node_id;
+            AI::initialize(gameView, Phone(this));
             if (viewer.type() == AgentType::THIEF) {
                 start_node_id = AI::get_thief_starting_node(gameView);
             } else {
                 start_node_id = 3; // todo dummy
             }
             DeclareReadiness(start_node_id);
-            AI::initialize(gameView, Phone(this));
         }
 
         void perform_move(const GameView &gameView) const {
