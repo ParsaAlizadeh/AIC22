@@ -3,7 +3,8 @@
 set -e
 set -o pipefail
 
-script_path=$(dirname "$(readlink -f "$0")")""
+script_path=$(dirname "$(readlink -f "$0")")
+repo_url="https://raw.githubusercontent.com/SharifAIChallenge/AIC22-Game/main"
 
 mkcd() {
     mkdir -p $1
@@ -29,7 +30,7 @@ agentpath() {
 }
 
 mappath() {
-    echo "$script_path/map/$1"
+    echo "$script_path/map/map$1"
 }
 
 run() {
@@ -37,8 +38,8 @@ run() {
     java -jar hideandseek-*.jar \
         --first-team="$(agentpath $1)" \
         --second-team="$(agentpath $2)" \
-        "$(mappath $3).yml" \
-        "$(mappath $3).json" \
+        "$(mappath $3)/map.yml" \
+        "$(mappath $3)/map.json" \
         | tee logs/stdout.txt
     mv logs/server.log "logs/server_$(date +"%Y_%m_%d_%H_%M_%S").log"
 }
@@ -50,6 +51,16 @@ buildrun() {
 
 publish() {
     cp "$(agentpath main)" "$(agentpath $1)"
+}
+
+fetchmap() {
+    mkdir -p "$(mappath $1)"
+    curl "$repo_url/Maps/map$1/map.json" -o "$(mappath $1)/map.json"
+    curl "$repo_url/Maps/map$1/map.yml" -o "$(mappath $1)/map.yml"
+}
+
+visual() {
+    ./visual/AIC22-Graphic.x86_64
 }
 
 $@
