@@ -64,4 +64,9 @@ visual() {
     ./visual/AIC22-Graphic.x86_64
 }
 
+package() {
+    cd client/
+    ls | grep -Ev 'build$' | xargs zip -r "$script_path/client.zip"
+}
+
 $@
