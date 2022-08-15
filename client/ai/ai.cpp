@@ -36,7 +36,7 @@ vector<HAS::Agent> get_enemies(const GameView &gameView) {
     vector<HAS::Agent> enemies;
     const auto &viewer = gameView.viewer();
     for (const auto &agent: gameView.visible_agents())
-        if (agent.team() != viewer.team() && agent.type() != viewer.type())
+        if (!agent.is_dead() && agent.team() != viewer.team() && agent.type() != viewer.type())
             enemies.push_back(agent);
     return enemies;
 }
@@ -45,7 +45,7 @@ vector<HAS::Agent> get_teammate(const GameView &gameView) {
     vector<HAS::Agent> enemies;
     const auto &viewer = gameView.viewer();
     for (const auto &agent: gameView.visible_agents())
-        if (agent.team() == viewer.team() && agent.type() == viewer.type())
+        if (!agent.is_dead() && agent.team() == viewer.team() && agent.type() == viewer.type())
             enemies.push_back(agent);
     return enemies;
 }
