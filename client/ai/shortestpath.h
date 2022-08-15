@@ -9,5 +9,5 @@ using namespace std;
 struct ShortestPath {
     vector<int> dist, first, last;
     ShortestPath(int n);
-    void update(const Graph* graph, const vector<int> &start_nodes, bool use_price);
+    void update(const Graph* graph, const vector<int> &start_nodes, double wallet);
 };

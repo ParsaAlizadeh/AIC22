@@ -15,8 +15,9 @@ inline size_t argmax(ForwardIterator first, ForwardIterator last) {
 }
 
 void redirect_cerr(int id) {
-    string filename = "./logs/client/" + to_string(id) + ".log";
-    freopen(filename.c_str(), "w", stderr);
+    // string filename = "./logs/client/" + to_string(id) + ".log";
+    // freopen(filename.c_str(), "w", stderr);
+    freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -66,6 +67,8 @@ const AI::Phone* my_phone;
 const Graph* graph;
 AIAgent* aiagent;
 
+const double INF = numeric_limits<double>::max();
+
 struct AIThief : AIAgent {
     ShortestPath *policemap, *selfmap, *tmpmap;
 
@@ -76,7 +79,7 @@ struct AIThief : AIAgent {
     }
     int starting_node(const GameView &gameView) {
         vector<int> node_options;
-        tmpmap->update(graph, {1}, false);
+        tmpmap->update(graph, {1}, INF);
         int maxdist = 0;
         for (int i = 1; i < graph->n; i++) {
             maxdist = max(maxdist, tmpmap->dist[i]);
@@ -92,11 +95,11 @@ struct AIThief : AIAgent {
     int turn(const GameView &gameView) {
         const auto &me = gameView.viewer();
         const auto &enemies = get_enemies(gameView);
-        selfmap->update(graph, {me.node_id()}, false);
+        selfmap->update(graph, {me.node_id()}, gameView.balance());
         vector<int> police_nodes;
         for (const auto &police : enemies)
             police_nodes.push_back(police.node_id());
-        policemap->update(graph, police_nodes, false);
+        policemap->update(graph, police_nodes, INF);
         vector<int> node_options;
         for (int i = 1; i < graph->n; i++) {
             if (selfmap->dist[i] < policemap->dist[i])
@@ -105,7 +108,7 @@ struct AIThief : AIAgent {
         shuffle(begin(node_options), end(node_options), rng);
         vector<int> node_scores;
         for (int node : node_options) {
-            tmpmap->update(graph, {node}, false);
+            tmpmap->update(graph, {node}, INF);
             int score = 0;
             for (const auto &police: enemies) {
                 score += tmpmap->dist[police.node_id()];
@@ -140,7 +143,7 @@ struct AIPolice : AIAgent {
         const auto &polices = get_teammate(gameView);
         vector<int> node_scores;
         for (int node : last_seen) {
-            tmpmap->update(graph, {node}, false);
+            tmpmap->update(graph, {node}, INF);
             int score = 0;
             for (const auto &police : polices)
                 score += tmpmap->dist[police.node_id()];
@@ -149,7 +152,7 @@ struct AIPolice : AIAgent {
         }
         int best_ind = argmin(begin(node_scores), end(node_scores));
         int target = last_seen[best_ind];
-        tmpmap->update(graph, {me.node_id()}, false);
+        tmpmap->update(graph, {me.node_id()}, gameView.balance());
         return tmpmap->first[target];
     }
 };

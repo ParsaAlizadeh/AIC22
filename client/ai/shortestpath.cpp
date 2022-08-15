@@ -9,7 +9,7 @@ ShortestPath::ShortestPath(int n) {
     last.resize(n+1);
 }
 
-void ShortestPath::update(const Graph* graph, const vector<int> &start_nodes, bool use_price) {
+void ShortestPath::update(const Graph* graph, const vector<int> &start_nodes, double wallet) {
     queue<int> q;
     fill(dist.begin(), dist.end(), dist.size());
     for (int st : start_nodes) {
@@ -20,7 +20,7 @@ void ShortestPath::update(const Graph* graph, const vector<int> &start_nodes, bo
     while (!q.empty()) {
         int u = q.front(); q.pop();
         for (const auto& edge : graph->adj[u]) {
-            if (!use_price && edge.price > 0)
+            if (edge.price > wallet)
                 continue;
             if (dist[edge.v] <= dist[u] + 1)
                 continue;
