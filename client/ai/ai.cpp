@@ -14,6 +14,24 @@ inline size_t argmax(ForwardIterator first, ForwardIterator last) {
     return distance(first, max_element(first, last));
 }
 
+template<class T, class U>
+inline const T& max_by(const vector<T> &options, const function<U(T)> &func) {
+    vector<U> scores;
+    for (const auto &item : options)
+        scores.push_back(func(item));
+    int best_ind = argmax(begin(scores), end(scores));
+    return options[best_ind];
+}
+
+template<class T, class U>
+inline const T& min_by(const vector<T> &options, const function<U(T)> &func) {
+    vector<U> scores;
+    for (const auto &item : options)
+        scores.push_back(func(item));
+    int best_ind = argmin(begin(scores), end(scores));
+    return options[best_ind];
+}
+
 void redirect_cerr(int id) {
     // string filename = "./logs/client/" + to_string(id) + ".log";
     // freopen(filename.c_str(), "w", stderr);
@@ -81,14 +99,11 @@ struct AIThief : AIAgent {
         vector<int> node_options;
         tmpmap->update(graph, {1}, INF);
         int maxdist = 0;
-        for (int i = 1; i < graph->n; i++) {
+        for (int i = 1; i < graph->n; i++)
             maxdist = max(maxdist, tmpmap->dist[i]);
-        }
-        for (int i = 1; i < graph->n; i++) {
-            if (tmpmap->dist[i] >= maxdist - 2) {
+        for (int i = 1; i < graph->n; i++)
+            if (tmpmap->dist[i] >= maxdist - 2)
                 node_options.push_back(i);
-            }
-        }
         int ind = rng() % node_options.size();
         return node_options[ind];
     }
@@ -106,17 +121,13 @@ struct AIThief : AIAgent {
                 node_options.push_back(i);
         }
         shuffle(begin(node_options), end(node_options), rng);
-        vector<int> node_scores;
-        for (int node : node_options) {
+        int target = max_by<int,int>(node_options, [&] (int node) {
             tmpmap->update(graph, {node}, INF);
             int score = 0;
-            for (const auto &police: enemies) {
+            for (const auto &police: enemies)
                 score += tmpmap->dist[police.node_id()];
-            }
-            node_scores.push_back(score);
-        }
-        int best_ind = argmax(begin(node_scores), end(node_scores));
-        int target = node_options[best_ind];
+            return score;
+        });
         return selfmap->first[target];
     }
 };
@@ -134,24 +145,20 @@ struct AIPolice : AIAgent {
         if (!enemies.empty()) {
             cerr << "visible turn!" << endl;
             last_seen.clear();
-            for (const auto &thief : enemies) {
+            for (const auto &thief : enemies)
                 last_seen.push_back(thief.node_id());
-            }
         }
         if (last_seen.empty())
             return me.node_id();
         const auto &polices = get_teammate(gameView);
-        vector<int> node_scores;
-        for (int node : last_seen) {
+        int target = min_by<int,int>(last_seen, [&] (int node) {
             tmpmap->update(graph, {node}, INF);
             int score = 0;
             for (const auto &police : polices)
                 score += tmpmap->dist[police.node_id()];
             cerr << "node=" << node << ", " << "score=" << score << endl;
-            node_scores.push_back(score);
-        }
-        int best_ind = argmin(begin(node_scores), end(node_scores));
-        int target = last_seen[best_ind];
+            return score;
+        });
         tmpmap->update(graph, {me.node_id()}, gameView.balance());
         return tmpmap->first[target];
     }
