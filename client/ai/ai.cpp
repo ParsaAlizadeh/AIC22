@@ -184,61 +184,6 @@ struct AIPolice : AIAgent {
     }
 };
 
-struct AIThief_v2 : AIAgent {
-    ShortestPath *policemap, *selfmap, *tmpmap;
-
-    void initialize(const GameView &gameView) {
-        policemap = new ShortestPath(graph->n);
-        selfmap = new ShortestPath(graph->n);
-        tmpmap = new ShortestPath(graph->n);
-    }
-    int starting_node(const GameView &gameView) {
-        vector<int> node_options;
-        tmpmap->update(graph, {1}, INF);
-        int maxdist = 0;
-        for (int i = 1; i <= graph->n; i++)
-            maxdist = max(maxdist, tmpmap->dist[i]);
-        for (int i = 1; i <= graph->n; i++)
-            if (tmpmap->dist[i] >= maxdist - 2)
-                node_options.push_back(i);
-        int ind = rng() % node_options.size();
-        cerr << "max dist=" << tmpmap->dist[node_options[ind]] << endl;
-        return node_options[ind];
-    }
-    int turn(const GameView &gameView) {
-        const auto &me = gameView.viewer();
-        const auto &enemies = get_enemies(gameView);
-        selfmap->update(graph, {me.node_id()}, gameView.balance());
-        vector<int> police_nodes;
-        for (const auto &police : enemies)
-            police_nodes.push_back(police.node_id());
-        policemap->update(graph, police_nodes, INF);
-        vector<int> node_options;
-        for (int i = 1; i <= graph->n; i++) {
-            if (selfmap->dist[i] < policemap->dist[i])
-                node_options.push_back(i);
-        }
-        cerr << "options=" << node_options.size() << endl;
-        shuffle(begin(node_options), end(node_options), rng);
-        int target = max_by<int,int>(node_options, [&] (int node) {
-            tmpmap->update(graph, {node}, INF);
-            int score = 0 , pw2 = 1;
-            vector<int> dist;
-            for (const auto &police: enemies)
-                dist.push_back(tmpmap->dist[police.node_id()]);
-            sort(all(dist) , greater<int>());
-            for(int i = 0 ; i < dist.size() ; i++){
-                score += pw2 * dist[i];
-                pw2 *= 2;
-            }
-            cerr << "node=" << node << ", " << "score=" << score << endl;
-            return score;
-        });
-        cerr << "current=" << me.node_id() << ", " << "target=" << target << endl;
-        return selfmap->first[target];
-    }
-};
-
 struct AIPolice_v2 : AIAgent {
     ShortestPath *tmpmap;
     vector<MyAgent> last_seen;
@@ -274,15 +219,13 @@ struct AIPolice_v2 : AIAgent {
         shuffle(all(last_seen) , rng);
         MyAgent target = min_by<MyAgent,int>(last_seen, [&] (MyAgent thief) {
             tmpmap->update(graph, {thief.node}, INF);
-            int score = 0 , pw2 = 1;
+            int score = 0;
             vector<int> dist;
             for (const auto &police : polices)
                 dist.push_back(tmpmap->dist[police.node_id()]);
             sort(all(dist), greater<int>());
-            for(int i = 0 ; i < dist.size() ; i++){
-                score += pw2 * dist[i];
-                pw2 *= 2;
-            }
+            for(int i = 0 ; i < dist.size() ; i++)
+                score += (i + 1) * dist[i];
             cerr << "node=" << thief.node << ", " << "score=" << score << endl;
             return score;
         });
