@@ -95,7 +95,7 @@ agents:
     team: SECOND
     type: POLICE
     balance: 100.0
-    
+
 income:
   policeIncomeEachTurn: 5
   thiefIncomeEachTurn: 5
@@ -1105,11 +1105,12 @@ graph:
     - id: 116
     - id: 117
     - id: 118
-    
-    
+
+
 turnSettings:
-  maxTurns: 200
+  maxTurns: 50
   visibleTurns:
+    - 4
     - 10
     - 20
     - 30
@@ -1156,7 +1157,7 @@ turnSettings:
     - 196
     - 198
     - 200
-    
+
 chatSettings:
   chatBoxMaxSize: 100
   chatCostPerCharacter: 1

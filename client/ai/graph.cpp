@@ -2,12 +2,12 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-//const int SEED = 684345634;
+const int SEED = 684345634;
 
 Graph::Graph(const HAS::Graph& g) {
     n = g.nodes().size();
     m = g.paths().size();
-    mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+    mt19937 rng(SEED);
     vector<int> inds;
     for (int i = 0; i < m; i++) {
         inds.push_back(i);
