@@ -1108,9 +1108,8 @@ graph:
 
 
 turnSettings:
-  maxTurns: 50
+  maxTurns: 200
   visibleTurns:
-    - 4
     - 10
     - 20
     - 30

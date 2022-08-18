@@ -40,9 +40,9 @@ inline const T& min_by(const vector<T> &options, const function<U(T)> &func) {
 }
 
 void redirect_cerr(int id) {
-    string filename = "./logs/client/" + to_string(id) + ".log";
-    freopen(filename.c_str(), "w", stderr);
-    // freopen("/dev/null", "w", stderr);
+    // string filename = "./logs/client/" + to_string(id) + ".log";
+    // freopen(filename.c_str(), "w", stderr);
+    freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -70,15 +70,20 @@ vector<HAS::Agent> get_enemies(const GameView &gameView) {
 }
 
 vector<HAS::Agent> get_teammate(const GameView &gameView) {
-    vector<HAS::Agent> enemies;
+    vector<HAS::Agent> teammates;
     const auto &viewer = gameView.viewer();
+    bool has_me = false;
     for (const auto &agent: gameView.visible_agents())
-        if (!agent.is_dead() && agent.team() == viewer.team() && agent.type() == viewer.type())
-            enemies.push_back(agent);
-    sort(all(enemies), [] (HAS::Agent const& a, HAS::Agent const& b) {
+        if (!agent.is_dead() && agent.team() == viewer.team() && agent.type() == viewer.type()) {
+            teammates.push_back(agent);
+            has_me = has_me || viewer.id() == agent.id();
+        }
+    if (!has_me)
+        teammates.push_back(viewer);
+    sort(all(teammates), [] (HAS::Agent const& a, HAS::Agent const& b) {
         return a.id() < b.id();
     });
-    return enemies;
+    return teammates;
 }
 
 const AI::Phone* my_phone;
@@ -183,7 +188,8 @@ struct AIThief : AIAgent {
 
 struct AIPolice : AIAgent {
     mt19937 rng = mt19937(SEED);
-    vector<int> last_seen;
+    vector<MyAgent> last_seen, minimax_order;
+    vector<int> choice_node, choice_value;
 
     int turn(const GameView &gameView) {
         const auto &me = gameView.viewer();
@@ -192,19 +198,92 @@ struct AIPolice : AIAgent {
             cerr << "visible turn!" << endl;
             last_seen.clear();
             for (const auto &thief : enemies)
-                last_seen.push_back(thief.node_id());
+                last_seen.push_back(MyAgent(thief));
         }
         if (last_seen.empty())
             return me.node_id();
         const auto &polices = get_teammate(gameView);
-        int target = min_by<int,int>(last_seen, [&] (int node) {
-            int score = 0;
+        MyAgent target = min_by<MyAgent,int>(last_seen, [&] (MyAgent const& agent) {
+            int score = 0, node = agent.node;
             for (const auto &police : polices)
                 score += get_dist(node, police.node_id(), INF);
             cerr << "node=" << node << ", " << "score=" << score << endl;
             return score;
         });
-        return get_map(gameView.balance())[me.node_id()]->first[target];
+        minimax_order.clear();
+        for (const auto& agent : get_teammate(gameView))
+            minimax_order.push_back(MyAgent(agent));
+        minimax_order.push_back(target);
+        choice_node.assign(minimax_order.size(), 0);
+        choice_value.assign(minimax_order.size(), INT_MAX);
+        cerr << "minimax: ";
+        for (const auto& agent: minimax_order) {
+            cerr << "(" << agent.id << ", ";
+            if (agent.type == HAS::AgentType::POLICE)
+                cerr << "police";
+            else
+                cerr << "thief";
+            cerr << ") ";
+        }
+        cerr << endl;
+        minimax(1, 0);
+        int choice;
+        for (int i = 0; i < minimax_order.size(); i++) {
+            if (minimax_order[i].id == me.id()) {
+                choice = choice_node[i];
+                cerr << "choice=" << choice << " score=" << choice_value[i] << endl;
+            }
+        }
+        return choice;
+    }
+    int minimax(int level, int ind) {
+        if (ind == minimax_order.size()) {
+            ind = 0;
+            level--;
+        }
+        if (level == 0) {
+            const auto& target = minimax_order.back();
+            int score = 0;
+            for (int i = 0; i < minimax_order.size()-1; i++) {
+                const auto& police = minimax_order[i];
+                score += get_dist(police.node, target.node, police.balance);
+            }
+            return score;
+        }
+        MyAgent now = minimax_order[ind];
+        if (now.type == HAS::AgentType::POLICE) {
+            int result = INT_MAX;
+            for (const auto& edge : graph->adj[now.node]) {
+                if (edge.price > now.balance)
+                    continue;
+                MyAgent nxt = now;
+                nxt.node = edge.v;
+                nxt.balance -= edge.price;
+                minimax_order[ind] = nxt;
+                int score = minimax(level, ind+1);
+                minimax_order[ind] = now;
+                result = min(result, score);
+                if (score < choice_value[ind]) { // and first layer
+                    choice_value[ind] = score;
+                    choice_node[ind] = edge.v;
+                }
+            }
+            return result;
+        } else {
+            int result = minimax(level, ind+1);
+            for (const auto& edge : graph->adj[now.node]) {
+                if (edge.price > now.balance)
+                    continue;
+                MyAgent nxt = now;
+                nxt.node = edge.v;
+                nxt.balance -= edge.price;
+                minimax_order[ind] = nxt;
+                int score = minimax(level, ind+1);
+                minimax_order[ind] = now;
+                result = max(result, score);
+            }
+            return result;
+        }
     }
 };
 
