@@ -4,6 +4,13 @@
 using namespace std;
 using namespace Types;
 
+//typedef long long ll;
+
+#define all(x)  (x).begin(), (x).end()
+
+//const int SEED = 684345634;
+const double INF = numeric_limits<double>::max();
+
 template<class ForwardIterator>
 inline size_t argmin(ForwardIterator first, ForwardIterator last) {
     return distance(first, min_element(first, last));
@@ -33,9 +40,9 @@ inline const T& min_by(const vector<T> &options, const function<U(T)> &func) {
 }
 
 void redirect_cerr(int id) {
-    // string filename = "./logs/client/" + to_string(id) + ".log";
-    // freopen(filename.c_str(), "w", stderr);
-    freopen("/dev/null", "w", stderr);
+    string filename = "./logs/client/" + to_string(id) + ".log";
+    freopen(filename.c_str(), "w", stderr);
+    // freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -81,11 +88,24 @@ struct AIAgent {
     };
 };
 
+struct MyAgent{
+    double balance;
+    int id , type , node; // type = (police ? 0 : 1);
+    MyAgent(int _id, int _type, int _node){
+        balance = INF;
+        id = _id;
+        type = _type;
+        node = _node;
+    }
+};
+
+int id_cmp(MyAgent x, MyAgent y){
+    return x.id < y.id;
+}
+
 const AI::Phone* my_phone;
 const Graph* graph;
 AIAgent* aiagent;
-
-const double INF = numeric_limits<double>::max();
 
 struct AIThief : AIAgent {
     ShortestPath *policemap, *selfmap, *tmpmap;
@@ -164,6 +184,114 @@ struct AIPolice : AIAgent {
     }
 };
 
+struct AIThief_v2 : AIAgent {
+    ShortestPath *policemap, *selfmap, *tmpmap;
+
+    void initialize(const GameView &gameView) {
+        policemap = new ShortestPath(graph->n);
+        selfmap = new ShortestPath(graph->n);
+        tmpmap = new ShortestPath(graph->n);
+    }
+    int starting_node(const GameView &gameView) {
+        vector<int> node_options;
+        tmpmap->update(graph, {1}, INF);
+        int maxdist = 0;
+        for (int i = 1; i <= graph->n; i++)
+            maxdist = max(maxdist, tmpmap->dist[i]);
+        for (int i = 1; i <= graph->n; i++)
+            if (tmpmap->dist[i] >= maxdist - 2)
+                node_options.push_back(i);
+        int ind = rng() % node_options.size();
+        cerr << "max dist=" << tmpmap->dist[node_options[ind]] << endl;
+        return node_options[ind];
+    }
+    int turn(const GameView &gameView) {
+        const auto &me = gameView.viewer();
+        const auto &enemies = get_enemies(gameView);
+        selfmap->update(graph, {me.node_id()}, gameView.balance());
+        vector<int> police_nodes;
+        for (const auto &police : enemies)
+            police_nodes.push_back(police.node_id());
+        policemap->update(graph, police_nodes, INF);
+        vector<int> node_options;
+        for (int i = 1; i <= graph->n; i++) {
+            if (selfmap->dist[i] < policemap->dist[i])
+                node_options.push_back(i);
+        }
+        cerr << "options=" << node_options.size() << endl;
+        shuffle(begin(node_options), end(node_options), rng);
+        int target = max_by<int,int>(node_options, [&] (int node) {
+            tmpmap->update(graph, {node}, INF);
+            int score = 0 , pw2 = 1;
+            vector<int> dist;
+            for (const auto &police: enemies)
+                dist.push_back(tmpmap->dist[police.node_id()]);
+            sort(all(dist) , greater<int>());
+            for(int i = 0 ; i < dist.size() ; i++){
+                score += pw2 * dist[i];
+                pw2 *= 2;
+            }
+            cerr << "node=" << node << ", " << "score=" << score << endl;
+            return score;
+        });
+        cerr << "current=" << me.node_id() << ", " << "target=" << target << endl;
+        return selfmap->first[target];
+    }
+};
+
+struct AIPolice_v2 : AIAgent {
+    ShortestPath *tmpmap;
+    vector<MyAgent> last_seen;
+
+    void initialize(const GameView &gameView) {
+        tmpmap = new ShortestPath(graph->n);
+    }
+    int turn(const GameView &gameView) {
+        const auto &me = gameView.viewer();
+        const auto &enemies = get_enemies(gameView);
+        if (!enemies.empty()) {
+            cerr << "visible turn!" << endl;
+            last_seen.clear();
+            for (const auto &thief : enemies)
+                last_seen.push_back(MyAgent(thief.id() , 1 , thief.node_id()));
+        }
+        if (last_seen.empty())
+            return me.node_id(); // TODO
+        vector<HAS::Agent> polices = get_teammate(gameView);
+        int flag = 0;
+        for(auto &i : polices){
+            if(i.id() == me.id()){
+                flag = 1;
+            }
+        }
+        if(flag == 0){
+            polices.push_back(me);
+        }
+        vector<MyAgent> police_agents;
+        for(auto &police : polices)
+            police_agents.push_back(MyAgent(police.id() , 0 , police.node_id()));
+        sort(all(last_seen) , id_cmp);
+        shuffle(all(last_seen) , rng);
+        MyAgent target = min_by<MyAgent,int>(last_seen, [&] (MyAgent thief) {
+            tmpmap->update(graph, {thief.node}, INF);
+            int score = 0 , pw2 = 1;
+            vector<int> dist;
+            for (const auto &police : polices)
+                dist.push_back(tmpmap->dist[police.node_id()]);
+            sort(all(dist), greater<int>());
+            for(int i = 0 ; i < dist.size() ; i++){
+                score += pw2 * dist[i];
+                pw2 *= 2;
+            }
+            cerr << "node=" << thief.node << ", " << "score=" << score << endl;
+            return score;
+        });
+        sort(all(police_agents) , id_cmp);
+        tmpmap->update(graph, {me.node_id()}, gameView.balance());
+        return tmpmap->first[target.node];
+    }
+};
+
 namespace AI {
     void initialize(const GameView &gameView, const Phone &phone) {
         my_phone = &phone;
@@ -173,9 +301,9 @@ namespace AI {
         cerr << endl;
         graph = new Graph(gameView.config().graph());
         if (me.type() == HAS::AgentType::POLICE)
-            aiagent = new AIPolice();
+            aiagent = new AIPolice_v2();
         else
-            aiagent = new AIThief();
+            aiagent = new AIThief_v2();
         aiagent->initialize(gameView);
     }
 

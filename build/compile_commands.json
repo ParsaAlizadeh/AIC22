@@ -1,0 +1,37 @@
+[
+{
+  "directory": "/home/alireza/Codes/Contests/AIC2022/AIC22/build",
+  "command": "/usr/bin/g++ -DCARES_STATICLIB -I/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto -I/home/alireza/Codes/Contests/AIC2022/AIC22/client -isystem /include -O3 -DNDEBUG -o CMakeFiles/main.dir/main.cpp.o -c /home/alireza/Codes/Contests/AIC2022/AIC22/client/main.cpp",
+  "file": "/home/alireza/Codes/Contests/AIC2022/AIC22/client/main.cpp"
+},
+{
+  "directory": "/home/alireza/Codes/Contests/AIC2022/AIC22/build",
+  "command": "/usr/bin/g++ -DCARES_STATICLIB -I/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto -I/home/alireza/Codes/Contests/AIC2022/AIC22/client -isystem /include -O3 -DNDEBUG -std=gnu++11 -o proto/CMakeFiles/GRPC_PROTO.dir/hide_and_seek.grpc.pb.cc.o -c /home/alireza/Codes/Contests/AIC2022/AIC22/build/proto/hide_and_seek.grpc.pb.cc",
+  "file": "/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto/hide_and_seek.grpc.pb.cc"
+},
+{
+  "directory": "/home/alireza/Codes/Contests/AIC2022/AIC22/build",
+  "command": "/usr/bin/g++ -DCARES_STATICLIB -I/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto -I/home/alireza/Codes/Contests/AIC2022/AIC22/client -isystem /include -O3 -DNDEBUG -std=gnu++11 -o proto/CMakeFiles/GRPC_PROTO.dir/hide_and_seek.pb.cc.o -c /home/alireza/Codes/Contests/AIC2022/AIC22/build/proto/hide_and_seek.pb.cc",
+  "file": "/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto/hide_and_seek.pb.cc"
+},
+{
+  "directory": "/home/alireza/Codes/Contests/AIC2022/AIC22/build",
+  "command": "/usr/bin/g++ -DCARES_STATICLIB -I/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto -I/home/alireza/Codes/Contests/AIC2022/AIC22/client -isystem /include -O3 -DNDEBUG -o client/CMakeFiles/Client.dir/client.cpp.o -c /home/alireza/Codes/Contests/AIC2022/AIC22/client/client/client.cpp",
+  "file": "/home/alireza/Codes/Contests/AIC2022/AIC22/client/client/client.cpp"
+},
+{
+  "directory": "/home/alireza/Codes/Contests/AIC2022/AIC22/build",
+  "command": "/usr/bin/g++ -I/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto -I/home/alireza/Codes/Contests/AIC2022/AIC22/client -O3 -DNDEBUG -o ai/CMakeFiles/AI.dir/ai.cpp.o -c /home/alireza/Codes/Contests/AIC2022/AIC22/client/ai/ai.cpp",
+  "file": "/home/alireza/Codes/Contests/AIC2022/AIC22/client/ai/ai.cpp"
+},
+{
+  "directory": "/home/alireza/Codes/Contests/AIC2022/AIC22/build",
+  "command": "/usr/bin/g++ -I/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto -I/home/alireza/Codes/Contests/AIC2022/AIC22/client -O3 -DNDEBUG -o ai/CMakeFiles/AI.dir/graph.cpp.o -c /home/alireza/Codes/Contests/AIC2022/AIC22/client/ai/graph.cpp",
+  "file": "/home/alireza/Codes/Contests/AIC2022/AIC22/client/ai/graph.cpp"
+},
+{
+  "directory": "/home/alireza/Codes/Contests/AIC2022/AIC22/build",
+  "command": "/usr/bin/g++ -I/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto -I/home/alireza/Codes/Contests/AIC2022/AIC22/client -O3 -DNDEBUG -o ai/CMakeFiles/AI.dir/shortestpath.cpp.o -c /home/alireza/Codes/Contests/AIC2022/AIC22/client/ai/shortestpath.cpp",
+  "file": "/home/alireza/Codes/Contests/AIC2022/AIC22/client/ai/shortestpath.cpp"
+}
+]

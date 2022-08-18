@@ -1,0 +1,153 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "client/libClient.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"client/CMakeLists.txt",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 3,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 4,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 14,
+				"parent" : 4
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 15,
+				"parent" : 4
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O3 -DNDEBUG"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 2,
+					"define" : "CARES_STATICLIB"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/alireza/Codes/Contests/AIC2022/AIC22/client"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/include"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "GRPC_PROTO::@4dcc01eb4302123f3a4a"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "AI::@ac13f704f5203ba04c34"
+		}
+	],
+	"id" : "Client::@b0c487aac068df482bf0",
+	"name" : "Client",
+	"nameOnDisk" : "libClient.a",
+	"paths" : 
+	{
+		"build" : "client",
+		"source" : "client"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"path" : "client/client.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "client/client.cpp",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

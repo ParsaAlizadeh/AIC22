@@ -1,0 +1,12 @@
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/CMakeFiles/main.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/CMakeFiles/edit_cache.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/CMakeFiles/rebuild_cache.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto/CMakeFiles/GRPC_PROTO.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto/CMakeFiles/edit_cache.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/proto/CMakeFiles/rebuild_cache.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/client/CMakeFiles/Client.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/client/CMakeFiles/edit_cache.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/client/CMakeFiles/rebuild_cache.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/ai/CMakeFiles/AI.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/ai/CMakeFiles/edit_cache.dir
+/home/alireza/Codes/Contests/AIC2022/AIC22/build/ai/CMakeFiles/rebuild_cache.dir
