@@ -151,6 +151,7 @@ struct AIThief : AIAgent {
         policemap = new ShortestPath(graph->n);
     }
     int starting_node(const GameView &gameView) {
+        mt19937 rng = mt19937(SEED);
         vector<int> node_options;
         auto tmpmap = get_map(INF)[1];
         int maxdist = 0;
@@ -159,6 +160,31 @@ struct AIThief : AIAgent {
         for (int i = 1; i < graph->n; i++)
             if (tmpmap->dist[i] >= maxdist - 2)
                 node_options.push_back(i);
+        const auto &me = gameView.viewer();
+        const auto &teammates = get_teammate(gameView);
+        vector<int> ans;
+        int max_sum = -1;
+        for(int i = 0 ; i < 10 ; i++){
+            int sum = 0;
+            vector<int> nodes;
+            for(int j = 0 ; j < teammates.size(); j++){
+                nodes.push_back(node_options[rng() % node_options.size()]);
+            }
+            for(int j : nodes){
+                for(int k : nodes){
+                    sum += get_dist(j , k , INF);
+                }
+            }
+            if(sum > max_sum){
+                max_sum = sum;
+                ans = nodes;
+            }
+        }
+        for(int i = 0 ; i < ans.size() ; i++){
+            if(teammates[i].id() == me.id()){
+                return ans[i];
+            }
+        }
         int ind = rng() % node_options.size();
         return node_options[ind];
     }
