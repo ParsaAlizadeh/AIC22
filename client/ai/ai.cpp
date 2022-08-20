@@ -40,9 +40,9 @@ inline const T& min_by(const vector<T> &options, const function<U(T)> &func) {
 }
 
 void redirect_cerr(int id) {
-    string filename = "./logs/client/" + to_string(id) + ".log";
-    freopen(filename.c_str(), "w", stderr);
-    // freopen("/dev/null", "w", stderr);
+    // string filename = "./logs/client/" + to_string(id) + ".log";
+    // freopen(filename.c_str(), "w", stderr);
+    freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -253,7 +253,7 @@ struct AIPolice : AIAgent {
                     min_r = min(min_r , max_dist[i]);
                 }
                 for(int i = 1; i <= graph->n; i++)
-                    if(max_dist[i] == min_r)
+                    if(max_dist[i] <= min_r + 1)
                         options.push_back(i);
                 int ind = rng() % options.size(); 
                 starting_target = options[ind];
