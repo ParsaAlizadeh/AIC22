@@ -91,7 +91,7 @@ struct AIThief : AIAgent {
         for (int i = 1; i < graph->n; i++)
             if (tmpmap->dist[i] >= maxdist - 2)
                 node_options.push_back(i);
-        const auto &me = gameView.viewer();
+        const auto &me = world->get_self(gameView);
         const auto &teammates = world->get_teammates(gameView);
         vector<int> ans;
         int max_sum = -1;
@@ -109,13 +109,13 @@ struct AIThief : AIAgent {
             }
         }
         for(int i = 0 ; i < ans.size() ; i++)
-            if(teammates[i].id == me.id())
+            if(teammates[i].id == me.id)
                 return ans[i];
         int ind = rng() % node_options.size();
         return node_options[ind];
     }
     int turn(const GameView &gameView) {
-        const auto &me = gameView.viewer();
+        const auto &me = world->get_self(gameView);
         const auto &enemies = world->get_enemies(gameView);
         const auto &teammates = world->get_teammates(gameView);
         auto selfmap = get_selfmap(gameView);
@@ -140,6 +140,11 @@ struct AIThief : AIAgent {
             }
             for (const auto &thief : teammates)
                 score += world->get_dist(node, thief.node, INF);
+            cerr << "score " << node << " " << score << " ";
+            for(int i = 1; i <= graph->n; i++)
+                if(world->get_dist(node, i , me.balance) <= 2)
+                    score++;
+            cerr << score << endl;
             return score;
         });
         return selfmap->first[target];
@@ -156,7 +161,7 @@ struct AIPolice : AIAgent {
         int turn_number = gameView.turn().turnnumber();
         vector<int> visible_turns;
         const auto& visible = gameView.config().turnsettings().visibleturns();
-        const auto &me = gameView.viewer();
+        const auto &me = world->get_self(gameView);
         const auto &enemies = world->get_enemies(gameView);
         auto selfmap = get_selfmap(gameView);
         for(const auto& turn : visible){
@@ -213,7 +218,7 @@ struct AIPolice : AIAgent {
         minimax(1, 0);
         int choice;
         for (int i = 0; i < minimax_order.size(); i++) {
-            if (minimax_order[i].id == me.id()) {
+            if (minimax_order[i].id == me.id) {
                 choice = choice_node[i];
                 cerr << "choice=" << choice << " score=" << choice_value[i] << endl;
             }
