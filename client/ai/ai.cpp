@@ -201,8 +201,13 @@ struct AIThief : AIAgent {
         shuffle(begin(node_options), end(node_options), rng);
         int target = max_by<int,int>(node_options, [&] (int node) {
             int score = 0;
-            for (const auto &police: enemies)
-                score += get_dist(node, police.node_id(), INF);
+            for (const auto &police: enemies){
+                int dist = get_dist(node, police.node_id(), INF);
+                score += dist;
+                if(dist == 1){
+                    score -= 1000 * 1000;
+                }
+            }
             for (const auto &thief : teammates)
                 score += get_dist(node, thief.node_id(), INF);
             return score;
@@ -215,6 +220,7 @@ struct AIPolice : AIAgent {
     mt19937 rng = mt19937(SEED);
     vector<MyAgent> last_seen, minimax_order;
     vector<int> choice_node, choice_value;
+    int starting_target = -1;
 
     int turn(const GameView &gameView) {
         int turn_number = gameView.turn().turnnumber();
@@ -232,24 +238,26 @@ struct AIPolice : AIAgent {
                 last_seen.push_back(MyAgent(thief));
         }
         if (last_seen.empty()){
-            int cnt_edge = (visible_turns[0] - turn_number) / 2;
-            vector<int> max_dist , options;
-            int max_r = -1;
-            max_dist.push_back(-1);
-            for(int i = 1; i <= graph->n; i++){
+            if(starting_target == -1){
+                int cnt_edge = (visible_turns[0] - turn_number) / 2;
+                vector<int> max_dist , options;
+                int max_r = -1;
                 max_dist.push_back(-1);
-                if(get_dist(me.node_id() , i , gameView.balance()) > cnt_edge)
-                    continue;
-                for(int j = 1; j <= graph->n; j++)
-                    max_dist[i] = max(max_dist[i] , get_dist(i , j , INF));
-                max_r = max(max_r , max_dist[i]);
+                for(int i = 1; i <= graph->n; i++){
+                    max_dist.push_back(-1);
+                    if(get_dist(me.node_id() , i , gameView.balance()) > cnt_edge)
+                        continue;
+                    for(int j = 1; j <= graph->n; j++)
+                        max_dist[i] = max(max_dist[i] , get_dist(i , j , INF));
+                    max_r = max(max_r , max_dist[i]);
+                }
+                for(int i = 1; i <= graph->n; i++)
+                    if(max_dist[i] == max_r)
+                        options.push_back(i);
+                int ind = rng() % options.size();
+                starting_target = options[ind];
             }
-            for(int i = 1; i <= graph->n; i++)
-                if(max_dist[i] == max_r)
-                    options.push_back(i);
-            int ind = rng() % options.size();
-            int target = options[ind];
-            return get_map(gameView.balance())[me.node_id()]->first[target];
+            return get_map(gameView.balance())[me.node_id()]->first[starting_target];
         }
         const auto &polices = get_teammate(gameView);
         MyAgent target = min_by<MyAgent,int>(last_seen, [&] (MyAgent const& agent) {
