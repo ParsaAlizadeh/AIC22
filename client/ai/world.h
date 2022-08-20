@@ -119,6 +119,7 @@ struct World {
         const auto& self = get_self(gameView);
         for (const auto& p : agents) {
             const auto& agent = p.second;
+            if (agent.dead) continue;
             if (agent.team != self.team) continue;
             if (agent.type != self.type) continue;
             result.push_back(agent);
@@ -130,6 +131,7 @@ struct World {
         const auto& self = get_self(gameView);
         for (const auto& p : agents) {
             const auto& agent = p.second;
+            if (agent.dead) continue;
             if (agent.team == self.team) continue;
             if (agent.type == self.type) continue;
             result.push_back(agent);
