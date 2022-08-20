@@ -239,6 +239,7 @@ struct AIPolice : AIAgent {
         }
         if (last_seen.empty()){
             if(starting_target == -1){
+                mt19937 rng = mt19937(chrono::steady_clock::now().time_since_epoch().count());
                 int cnt_edge = (visible_turns[0] - turn_number) / 2;
                 vector<int> max_dist , options;
                 int min_r = graph->n * 10;
@@ -256,7 +257,7 @@ struct AIPolice : AIAgent {
                         options.push_back(i);
                 int ind = rng() % options.size(); 
                 starting_target = options[ind];
-                cerr << "starting target=" << starting_target << endl;
+                cerr << "starting target=" << starting_target << ", " << "options=" << options.size() << endl;
             }
             return get_map(gameView.balance())[me.node_id()]->first[starting_target];
         }
