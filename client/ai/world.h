@@ -136,4 +136,9 @@ struct World {
         }
         return result;
     }
+    vector<Edge> get_options(int node) {
+        vector<Edge> result = graph->adj[node];
+        result.push_back(Edge{.id=-1, .u=node, .v=node, .price=0});
+        return result;
+    }
 };
