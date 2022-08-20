@@ -53,35 +53,6 @@ void log_turn(const GameView &gameView) {
     cerr << "turn=" << gameView.turn().turnnumber() << endl;
 }
 
-vector<HAS::Agent> get_enemies(const GameView &gameView) {
-    vector<HAS::Agent> enemies;
-    const auto &viewer = gameView.viewer();
-    for (const auto &agent: gameView.visible_agents())
-        if (!agent.is_dead() && agent.team() != viewer.team() && agent.type() != viewer.type())
-            enemies.push_back(agent);
-    sort(all(enemies), [] (HAS::Agent const& a, HAS::Agent const& b) {
-        return a.id() < b.id();
-    });
-    return enemies;
-}
-
-vector<HAS::Agent> get_teammate(const GameView &gameView) {
-    vector<HAS::Agent> teammates;
-    const auto &viewer = gameView.viewer();
-    bool has_me = false;
-    for (const auto &agent: gameView.visible_agents())
-        if (!agent.is_dead() && agent.team() == viewer.team() && agent.type() == viewer.type()) {
-            teammates.push_back(agent);
-            has_me = has_me || viewer.id() == agent.id();
-        }
-    if (!has_me)
-        teammates.push_back(viewer);
-    sort(all(teammates), [] (HAS::Agent const& a, HAS::Agent const& b) {
-        return a.id() < b.id();
-    });
-    return teammates;
-}
-
 const AI::Phone* my_phone;
 const Graph* graph;
 World* world;
@@ -98,18 +69,6 @@ struct AIAgent {
     };
     ShortestPath* get_selfmap(const GameView &gameView) {
         return world->get_map(gameView.balance())[gameView.viewer().node_id()];
-    }
-};
-
-struct MyAgent{
-    double balance;
-    int id, node;
-    HAS::AgentType type;
-    MyAgent(const HAS::Agent& agent) {
-        balance = INF;
-        id = agent.id();
-        node = agent.node_id();
-        type = agent.type();
     }
 };
 
@@ -133,7 +92,7 @@ struct AIThief : AIAgent {
             if (tmpmap->dist[i] >= maxdist - 2)
                 node_options.push_back(i);
         const auto &me = gameView.viewer();
-        const auto &teammates = get_teammate(gameView);
+        const auto &teammates = world->get_teammates(gameView);
         vector<int> ans;
         int max_sum = -1;
         for(int i = 0 ; i < 10 ; i++){
@@ -150,19 +109,19 @@ struct AIThief : AIAgent {
             }
         }
         for(int i = 0 ; i < ans.size() ; i++)
-            if(teammates[i].id() == me.id())
+            if(teammates[i].id == me.id())
                 return ans[i];
         int ind = rng() % node_options.size();
         return node_options[ind];
     }
     int turn(const GameView &gameView) {
         const auto &me = gameView.viewer();
-        const auto &enemies = get_enemies(gameView);
-        const auto &teammates = get_teammate(gameView);
+        const auto &enemies = world->get_enemies(gameView);
+        const auto &teammates = world->get_teammates(gameView);
         auto selfmap = get_selfmap(gameView);
         vector<int> police_nodes;
         for (const auto &police : enemies)
-            police_nodes.push_back(police.node_id());
+            police_nodes.push_back(police.node);
         policemap->update(graph, police_nodes, INF);
         vector<int> node_options;
         for (int i = 1; i < graph->n; i++) {
@@ -173,14 +132,14 @@ struct AIThief : AIAgent {
         int target = max_by<int,int>(node_options, [&] (int node) {
             int score = 0;
             for (const auto &police: enemies){
-                int dist = world->get_dist(node, police.node_id(), INF);
+                int dist = world->get_dist(node, police.node, INF);
                 score += dist;
                 if(dist == 1){
                     score -= 1000 * 1000;
                 }
             }
             for (const auto &thief : teammates)
-                score += world->get_dist(node, thief.node_id(), INF);
+                score += world->get_dist(node, thief.node, INF);
             return score;
         });
         return selfmap->first[target];
@@ -189,7 +148,7 @@ struct AIThief : AIAgent {
 
 struct AIPolice : AIAgent {
     mt19937 rng = mt19937(SEED);
-    vector<MyAgent> last_seen, minimax_order;
+    vector<WorldAgent> minimax_order;
     vector<int> choice_node, choice_value;
     int starting_target = -1;
 
@@ -198,19 +157,13 @@ struct AIPolice : AIAgent {
         vector<int> visible_turns;
         const auto& visible = gameView.config().turnsettings().visibleturns();
         const auto &me = gameView.viewer();
-        const auto &enemies = get_enemies(gameView);
+        const auto &enemies = world->get_enemies(gameView);
         auto selfmap = get_selfmap(gameView);
         for(const auto& turn : visible){
             visible_turns.push_back(turn);
         }
-        if (!enemies.empty()) {
-            cerr << "visible turn!" << endl;
-            last_seen.clear();
-            for (const auto &thief : enemies)
-                last_seen.push_back(MyAgent(thief));
-        }
-        if (last_seen.empty()){
-            if(starting_target == -1){
+        if (enemies.empty()) {
+            if(starting_target == -1) {
                 mt19937 rng = mt19937(chrono::steady_clock::now().time_since_epoch().count());
                 int cnt_edge = (visible_turns[0] - turn_number) / 2;
                 vector<int> max_dist , options;
@@ -233,17 +186,17 @@ struct AIPolice : AIAgent {
             }
             return selfmap->first[starting_target];
         }
-        const auto &polices = get_teammate(gameView);
-        MyAgent target = min_by<MyAgent,int>(last_seen, [&] (MyAgent const& agent) {
+        const auto &polices = world->get_teammates(gameView);
+        WorldAgent target = min_by<WorldAgent,int>(enemies, [&] (WorldAgent const& agent) {
             int score = 0, node = agent.node;
             for (const auto &police : polices)
-                score += world->get_dist(node, police.node_id(), INF);
+                score += world->get_dist(node, police.node, INF);
             cerr << "node=" << node << ", " << "score=" << score << endl;
             return score;
         });
         minimax_order.clear();
-        for (const auto& agent : get_teammate(gameView))
-            minimax_order.push_back(MyAgent(agent));
+        for (const auto& agent: polices)
+            minimax_order.push_back(agent);
         minimax_order.push_back(target);
         choice_node.assign(minimax_order.size(), 0);
         choice_value.assign(minimax_order.size(), INT_MAX);
@@ -281,13 +234,13 @@ struct AIPolice : AIAgent {
             }
             return score;
         }
-        MyAgent now = minimax_order[ind];
+        WorldAgent now = minimax_order[ind];
         if (now.type == HAS::AgentType::POLICE) {
             int result = INT_MAX;
             for (const auto& edge : graph->adj[now.node]) {
                 if (edge.price > now.balance)
                     continue;
-                MyAgent nxt = now;
+                WorldAgent nxt = now;
                 nxt.node = edge.v;
                 nxt.balance -= edge.price;
                 minimax_order[ind] = nxt;
@@ -305,7 +258,7 @@ struct AIPolice : AIAgent {
             for (const auto& edge : graph->adj[now.node]) {
                 if (edge.price > now.balance)
                     continue;
-                MyAgent nxt = now;
+                WorldAgent nxt = now;
                 nxt.node = edge.v;
                 nxt.balance -= edge.price;
                 minimax_order[ind] = nxt;

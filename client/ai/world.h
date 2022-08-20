@@ -12,6 +12,7 @@ using namespace Types;
 struct WorldAgent{
     double balance = INF;
     int id, node;
+    HAS::Team team;
     HAS::AgentType type;
     int last_seen = -100;
     bool dead = false;
@@ -21,6 +22,7 @@ struct WorldAgent{
         node = agent.node_id();
         type = agent.type();
         dead = agent.is_dead();
+        team = agent.team();
     }
     bool operator<(const WorldAgent& oth) const {
         return id < oth.id;
@@ -108,5 +110,30 @@ struct World {
         update_agent(gameView, gameView.viewer(), turn);
         if (gameView.balance() != agents[gameView.viewer().id()].balance)
             cerr << "balance mismatch!" << endl; // only when theif dies
+    }
+    const WorldAgent& get_self(const GameView &gameView) {
+        return agents[gameView.viewer().id()];
+    }
+    vector<WorldAgent> get_teammates(const GameView &gameView) {
+        vector<WorldAgent> result;
+        const auto& self = get_self(gameView);
+        for (const auto& p : agents) {
+            const auto& agent = p.second;
+            if (agent.team != self.team) continue;
+            if (agent.type != self.type) continue;
+            result.push_back(agent);
+        }
+        return result;
+    }
+    vector<WorldAgent> get_enemies(const GameView &gameView) {
+        vector<WorldAgent> result;
+        const auto& self = get_self(gameView);
+        for (const auto& p : agents) {
+            const auto& agent = p.second;
+            if (agent.team == self.team) continue;
+            if (agent.type == self.type) continue;
+            result.push_back(agent);
+        }
+        return result;
     }
 };

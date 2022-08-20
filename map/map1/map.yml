@@ -1456,7 +1456,7 @@ graph:
     - id: 159
 
 turnSettings:
-  maxTurns: 50
+  maxTurns: 200
   visibleTurns:
     - 10
     - 20
