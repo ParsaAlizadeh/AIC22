@@ -6,7 +6,6 @@ using namespace std;
 using namespace Types;
 
 const int SEED = 684345634;
-const double INF = numeric_limits<double>::max();
 
 template<class ForwardIterator>
 inline size_t argmin(ForwardIterator first, ForwardIterator last) {
@@ -37,9 +36,9 @@ inline const T& min_by(const vector<T> &options, const function<U(T)> &func) {
 }
 
 void redirect_cerr(int id) {
-    // string filename = "./logs/client/" + to_string(id) + ".log";
-    // freopen(filename.c_str(), "w", stderr);
-    freopen("/dev/null", "w", stderr);
+    string filename = "./logs/client/" + to_string(id) + ".log";
+    freopen(filename.c_str(), "w", stderr);
+    // freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -329,6 +328,7 @@ namespace AI {
         graph = new Graph(gameView.config().graph());
         world = new World();
         world->initialize(gameView, graph);
+        world->update(gameView);
         if (me.type() == HAS::AgentType::POLICE)
             aiagent = new AIPolice();
         else
@@ -344,11 +344,13 @@ namespace AI {
 
     int thief_move_ai(const GameView &gameView) {
         log_turn(gameView);
+        world->update(gameView);
         return aiagent->turn(gameView);
     }
 
     int police_move_ai(const GameView &gameView) {
         log_turn(gameView);
+        world->update(gameView);
         return aiagent->turn(gameView);
     }
 }

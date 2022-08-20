@@ -9,10 +9,29 @@ using namespace Types;
 
 #define all(x)  begin(x), end(x)
 
+struct WorldAgent{
+    double balance = INF;
+    int id, node;
+    HAS::AgentType type;
+    int last_seen = -100;
+    bool dead = false;
+    WorldAgent() {}
+    WorldAgent(const HAS::Agent& agent) {
+        id = agent.id();
+        node = agent.node_id();
+        type = agent.type();
+        dead = agent.is_dead();
+    }
+    bool operator<(const WorldAgent& oth) const {
+        return id < oth.id;
+    }
+};
+
 struct World {
     const Graph *graph;
-    vector<vector<ShortestPath*>> map;
+    vector<vector<ShortestPath*>> maps;
     vector<double> edge_cost;
+    map<int, WorldAgent> agents;
 
     void initialize(const GameView &gameView, const Graph* g) {
         graph = g;
@@ -26,25 +45,68 @@ struct World {
         sort(all(edge_cost));
         edge_cost.erase(unique(all(edge_cost)), end(edge_cost));
         for (auto cost : edge_cost) {
-            map.emplace_back();
-            auto& cur = map.back();
+            vector<ShortestPath*> cur;
             cur.push_back(nullptr);
             for (int i = 1; i <= graph->n; i++) {
                 auto sp = new ShortestPath(graph->n);
                 sp->update(graph, {i}, cost);
                 cur.push_back(sp);
             }
+            maps.push_back(cur);
         }
     }
     vector<ShortestPath*>& get_map(double wallet) {
         for (int i = edge_cost.size()-1; i >= 0; i--)
             if (edge_cost[i] <= wallet)
-                return map[i];
+                return maps[i];
     }
     ShortestPath* get_map_from(int u, double wallet) {
         return get_map(wallet)[u];
     }
     int get_dist(int u, int v, double wallet) {
         return get_map_from(u, wallet)->dist[v];
+    }
+
+    double get_income_by_type(const GameView &gameView, HAS::AgentType type) {
+        auto const& settings = gameView.config().incomesettings();
+        if (type == HAS::POLICE)
+            return settings.policeincomeeachturn();
+        return settings.thievesincomeeachturn();
+    }
+    double get_edge_price(int u, int v) {
+        for (const auto& edge : graph->adj[u])
+            if (edge.v == v)
+                return edge.price;
+        return 0;
+    }
+    void update_agent(const GameView &gameView, const HAS::Agent &ag, int turn) {
+        if (!agents.count(ag.id())) {
+            WorldAgent wag = ag;
+            wag.last_seen = turn;
+            if (turn == 1) {
+                wag.balance = gameView.balance(); // each agent same balance for start
+                wag.last_seen = 2;
+            }
+            agents[ag.id()] = wag;
+        }
+        auto& wag = agents[ag.id()];
+        if (wag.last_seen >= turn)
+            return;
+        int u = wag.node, v = ag.node_id(), last_seen = wag.last_seen;
+        wag.node = v;
+        wag.last_seen = turn;
+        wag.dead = ag.is_dead();
+        wag.balance += (turn - last_seen ) * get_income_by_type(gameView, wag.type);
+        if (turn - last_seen <= 2)
+            wag.balance -= get_edge_price(u, v);
+    }
+    void update(const GameView &gameView) {
+        int turn = gameView.turn().turnnumber();
+        for (const auto& agent : gameView.visible_agents()) {
+            update_agent(gameView, agent, turn);
+        }
+        update_agent(gameView, gameView.viewer(), turn);
+        if (gameView.balance() != agents[gameView.viewer().id()].balance)
+            cerr << "balance mismatch!" << endl; // only when theif dies
     }
 };
