@@ -101,7 +101,8 @@ struct AIAgent {
         sort(all(edge_cost));
         edge_cost.erase(unique(all(edge_cost)), end(edge_cost));
         for (auto cost : edge_cost) {
-            auto& cur = map.emplace_back();
+            map.emplace_back();
+            auto& cur = map.back();
             cur.push_back(nullptr);
             for (int i = 1; i <= graph->n; i++) {
                 auto sp = new ShortestPath(graph->n);
@@ -167,30 +168,26 @@ struct AIThief : AIAgent {
         for(int i = 0 ; i < 10 ; i++){
             int sum = 0;
             vector<int> nodes;
-            for(int j = 0 ; j < teammates.size(); j++){
+            for(int j = 0 ; j < teammates.size(); j++)
                 nodes.push_back(node_options[rng() % node_options.size()]);
-            }
-            for(int j : nodes){
-                for(int k : nodes){
+            for(int j : nodes)
+                for(int k : nodes)
                     sum += get_dist(j , k , INF);
-                }
-            }
             if(sum > max_sum){
                 max_sum = sum;
                 ans = nodes;
             }
         }
-        for(int i = 0 ; i < ans.size() ; i++){
-            if(teammates[i].id() == me.id()){
+        for(int i = 0 ; i < ans.size() ; i++)
+            if(teammates[i].id() == me.id())
                 return ans[i];
-            }
-        }
         int ind = rng() % node_options.size();
         return node_options[ind];
     }
     int turn(const GameView &gameView) {
         const auto &me = gameView.viewer();
         const auto &enemies = get_enemies(gameView);
+        const auto &teammates = get_teammate(gameView);
         auto selfmap = get_map(gameView.balance())[me.node_id()];
         vector<int> police_nodes;
         for (const auto &police : enemies)
@@ -206,6 +203,8 @@ struct AIThief : AIAgent {
             int score = 0;
             for (const auto &police: enemies)
                 score += get_dist(node, police.node_id(), INF);
+            for (const auto &thief : teammates)
+                score += get_dist(node, thief.node_id(), INF);
             return score;
         });
         return selfmap->first[target];
@@ -218,16 +217,40 @@ struct AIPolice : AIAgent {
     vector<int> choice_node, choice_value;
 
     int turn(const GameView &gameView) {
+        int turn_number = gameView.turn().turnnumber();
+        vector<int> visible_turns;
+        const auto& visible = gameView.config().turnsettings().visibleturns();
         const auto &me = gameView.viewer();
         const auto &enemies = get_enemies(gameView);
+        for(const auto& turn : visible){
+            visible_turns.push_back(turn);
+        }
         if (!enemies.empty()) {
             cerr << "visible turn!" << endl;
             last_seen.clear();
             for (const auto &thief : enemies)
                 last_seen.push_back(MyAgent(thief));
         }
-        if (last_seen.empty())
-            return me.node_id();
+        if (last_seen.empty()){
+            int cnt_edge = (visible_turns[0] - turn_number) / 2;
+            vector<int> max_dist , options;
+            int max_r = -1;
+            max_dist.push_back(-1);
+            for(int i = 1; i <= graph->n; i++){
+                max_dist.push_back(-1);
+                if(get_dist(me.node_id() , i , gameView.balance()) > cnt_edge)
+                    continue;
+                for(int j = 1; j <= graph->n; j++)
+                    max_dist[i] = max(max_dist[i] , get_dist(i , j , INF));
+                max_r = max(max_r , max_dist[i]);
+            }
+            for(int i = 1; i <= graph->n; i++)
+                if(max_dist[i] == max_r)
+                    options.push_back(i);
+            int ind = rng() % options.size();
+            int target = options[ind];
+            return get_map(gameView.balance())[me.node_id()]->first[target];
+        }
         const auto &polices = get_teammate(gameView);
         MyAgent target = min_by<MyAgent,int>(last_seen, [&] (MyAgent const& agent) {
             int score = 0, node = agent.node;

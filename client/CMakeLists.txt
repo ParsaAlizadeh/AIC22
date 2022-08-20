@@ -11,6 +11,8 @@ else()
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+set (CMAKE_CXX_STANDARD 11)
+
 include_directories(${CMAKE_BINARY_DIR}/proto) # so that every code can use the grpc generated files
 include_directories(${CMAKE_SOURCE_DIR})
 
