@@ -40,9 +40,9 @@ inline const T& min_by(const vector<T> &options, const function<U(T)> &func) {
 }
 
 void redirect_cerr(int id) {
-    // string filename = "./logs/client/" + to_string(id) + ".log";
-    // freopen(filename.c_str(), "w", stderr);
-    freopen("/dev/null", "w", stderr);
+    string filename = "./logs/client/" + to_string(id) + ".log";
+    freopen(filename.c_str(), "w", stderr);
+    // freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -241,21 +241,22 @@ struct AIPolice : AIAgent {
             if(starting_target == -1){
                 int cnt_edge = (visible_turns[0] - turn_number) / 2;
                 vector<int> max_dist , options;
-                int max_r = -1;
-                max_dist.push_back(-1);
+                int min_r = graph->n * 10;
+                max_dist.push_back(min_r);
                 for(int i = 1; i <= graph->n; i++){
                     max_dist.push_back(-1);
                     if(get_dist(me.node_id() , i , gameView.balance()) > cnt_edge)
                         continue;
                     for(int j = 1; j <= graph->n; j++)
                         max_dist[i] = max(max_dist[i] , get_dist(i , j , INF));
-                    max_r = max(max_r , max_dist[i]);
+                    min_r = min(min_r , max_dist[i]);
                 }
                 for(int i = 1; i <= graph->n; i++)
-                    if(max_dist[i] == max_r)
+                    if(max_dist[i] == min_r)
                         options.push_back(i);
-                int ind = rng() % options.size();
+                int ind = rng() % options.size(); 
                 starting_target = options[ind];
+                cerr << "starting target=" << starting_target << endl;
             }
             return get_map(gameView.balance())[me.node_id()]->first[starting_target];
         }
