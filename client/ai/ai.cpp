@@ -35,6 +35,34 @@ inline const T& min_by(const vector<T> &options, const function<U(T)> &func) {
     return options[best_ind];
 }
 
+template<class T, class U>
+inline const T& random_max_by(mt19937 rng, const vector<T> &options, const function<U(T)> &func) {
+    int score = INT_MIN , best_ind = -1;
+    for(int i = 0; i < 10; i++){
+        int ind = rng() % options.size();
+        int value = func(options[ind]);
+        if(value > score){
+            score = value;
+            best_ind = ind;
+        }
+    }
+    return options[best_ind];
+}
+
+template<class T, class U>
+inline const T& random_min_by(mt19937 rng, const vector<T> &options, const function<U(T)> &func) {
+    int score = INT_MAX , best_ind = -1;
+    for(int i = 0; i < 10; i++){
+        int ind = rng() % options.size();
+        int value = func(options[ind]);
+        if(value < score){
+            score = value;
+            best_ind = ind;
+        }
+    }
+    return options[best_ind];
+}
+
 void redirect_cerr(int id) {
     string filename = "./logs/client/" + to_string(id) + ".log";
     freopen(filename.c_str(), "w", stderr);
@@ -129,7 +157,7 @@ struct AIThief : AIAgent {
                 node_options.push_back(i);
         }
         shuffle(begin(node_options), end(node_options), rng);
-        int target = max_by<int,int>(node_options, [&] (int node) {
+        int target = random_max_by<int,int>(rng , node_options, [&] (int node) {
             int score = 0;
             for (const auto &police: enemies){
                 int dist = world->get_dist(node, police.node, INF);
