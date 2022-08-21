@@ -34,6 +34,7 @@ struct World {
     vector<vector<ShortestPath*>> maps;
     vector<double> edge_cost;
     map<int, WorldAgent> agents;
+    int current_turn;
 
     void initialize(const GameView &gameView, const Graph* g) {
         graph = g;
@@ -68,7 +69,9 @@ struct World {
     int get_dist(int u, int v, double wallet) {
         return get_map_from(u, wallet)->dist[v];
     }
-
+    int get_dist(WorldAgent agent , int v){
+        return get_dist(agent.node, v, agent.balance);
+    }
     double get_income_by_type(const GameView &gameView, HAS::AgentType type) {
         auto const& settings = gameView.config().incomesettings();
         if (type == HAS::POLICE)
@@ -104,6 +107,7 @@ struct World {
     }
     void update(const GameView &gameView) {
         int turn = gameView.turn().turnnumber();
+        current_turn = turn;
         for (const auto& agent : gameView.visible_agents()) {
             update_agent(gameView, agent, turn);
         }
