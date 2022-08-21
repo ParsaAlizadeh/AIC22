@@ -64,9 +64,9 @@ inline const T& random_min_by(mt19937 rng, const vector<T> &options, const funct
 }
 
 void redirect_cerr(int id) {
-    string filename = "./logs/client/" + to_string(id) + ".log";
-    freopen(filename.c_str(), "w", stderr);
-    // freopen("/dev/null", "w", stderr);
+    // string filename = "./logs/client/" + to_string(id) + ".log";
+    // freopen(filename.c_str(), "w", stderr);
+    freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -224,6 +224,17 @@ struct AIPolice : AIAgent {
             int score = 0, node = agent.node;
             for (const auto &police : polices)
                 score += world->get_dist(node, police.node, INF);
+            for (int i = 1; i <= graph->n; i++){
+                int flag = 1;
+                for(const auto &police : polices){
+                    int thief_dist = world->get_dist(agent, i);
+                    int police_dist = world->get_dist(police, i) + (world->current_turn - agent.last_seen) / 2;
+                    if(thief_dist >= police_dist - 1){
+                        flag = 0;
+                    }
+                }
+                score += flag;
+            }
             cerr << "node=" << node << ", " << "score=" << score << endl;
             return score;
         });
