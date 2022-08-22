@@ -293,7 +293,7 @@ struct AIPolice : AIAgent {
             }
             return score;
         }
-        WorldAgent now = minimax_order[ind];
+        const auto& now = minimax_order[ind];
         if (now.type == HAS::AgentType::POLICE) {
             int result = INT_MAX;
             for (const auto& edge : world->get_options(now.node)) {
@@ -313,7 +313,10 @@ struct AIPolice : AIAgent {
             }
             return result;
         } else {
-            int result = minimax(level, ind+1);
+            int result = INT_MIN;
+            for (int i = 0; i < minimax_order.size() - 1; i++)
+                if (now.node == minimax_order[i].node)
+                    return result;
             for (const auto& edge : world->get_options(now.node)) {
                 if (edge.price > now.balance)
                     continue;
