@@ -287,6 +287,7 @@ struct AIPolice : AIAgent {
                     int police_dist = world->get_dist(police, i) + min(2, (world->current_turn - target.last_seen) / 2);
                     if(thief_dist >= police_dist - 1){
                         flag = 0;
+                        break;
                     }
                 }
                 score += flag;
