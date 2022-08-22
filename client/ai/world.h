@@ -90,7 +90,7 @@ struct World {
             wag.last_seen = turn;
             if (turn == 1) {
                 wag.balance = gameView.balance(); // each agent same balance for start
-                wag.last_seen = 2;
+                wag.last_seen = 1;
             }
             agents[ag.id()] = wag;
         }
@@ -101,7 +101,7 @@ struct World {
         wag.node = v;
         wag.last_seen = turn;
         wag.dead = ag.is_dead();
-        wag.balance += (turn - last_seen ) * get_income_by_type(gameView, wag.type);
+        wag.balance += (turn - last_seen) * get_income_by_type(gameView, wag.type);
         if (turn - last_seen <= 2)
             wag.balance -= get_edge_price(u, v);
     }
@@ -113,7 +113,7 @@ struct World {
         }
         update_agent(gameView, gameView.viewer(), turn);
         if (gameView.balance() != agents[gameView.viewer().id()].balance)
-            cerr << "balance mismatch!" << endl; // only when theif dies
+            cerr << "balance mismatch! " << gameView.balance() << " " << agents[gameView.viewer().id()].balance << endl; // only when theif dies
     }
     const WorldAgent& get_self(const GameView &gameView) {
         return agents[gameView.viewer().id()];

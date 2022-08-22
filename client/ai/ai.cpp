@@ -64,9 +64,9 @@ inline const T& random_min_by(mt19937 rng, const vector<T> &options, const funct
 }
 
 void redirect_cerr(int id) {
-    // string filename = "./logs/client/" + to_string(id) + ".log";
-    // freopen(filename.c_str(), "w", stderr);
-    freopen("/dev/null", "w", stderr);
+    string filename = "./logs/client/" + to_string(id) + ".log";
+    freopen(filename.c_str(), "w", stderr);
+    // freopen("/dev/null", "w", stderr);
 }
 
 void log_agent(const HAS::Agent &agent) {
@@ -183,7 +183,7 @@ struct AIPolice : AIAgent {
     mt19937 rng = mt19937(SEED);
     vector<WorldAgent> minimax_order;
     vector<int> choice_node, choice_value;
-    int starting_target = -1;
+    int starting_target = -1 , target_id = -1;
 
     int turn(const GameView &gameView) {
         int turn_number = gameView.turn().turnnumber();
@@ -220,24 +220,27 @@ struct AIPolice : AIAgent {
             return selfmap->first[starting_target];
         }
         const auto &polices = world->get_teammates(gameView);
-        WorldAgent target = min_by<WorldAgent,int>(enemies, [&] (WorldAgent const& agent) {
-            int score = 0, node = agent.node;
-            for (const auto &police : polices)
-                score += world->get_dist(node, police.node, INF);
-            for (int i = 1; i <= graph->n; i++){
-                int flag = 1;
-                for(const auto &police : polices){
-                    int thief_dist = world->get_dist(agent, i);
-                    int police_dist = world->get_dist(police, i) + (world->current_turn - agent.last_seen) / 2;
-                    if(thief_dist >= police_dist - 1){
-                        flag = 0;
+        if(target_id == -1 || world->agents[target_id].dead){
+            target_id = min_by<WorldAgent,int>(enemies, [&] (WorldAgent const& agent) {
+                int score = 0, node = agent.node;
+                for (const auto &police : polices)
+                    score += world->get_dist(node, police.node, INF);
+                for (int i = 1; i <= graph->n; i++){
+                    int flag = 1;
+                    for(const auto &police : polices){
+                        int thief_dist = world->get_dist(agent, i);
+                        int police_dist = world->get_dist(police, i) + (world->current_turn - agent.last_seen) / 2;
+                        if(thief_dist >= police_dist - 1){
+                            flag = 0;
+                        }
                     }
+                    score += flag;
                 }
-                score += flag;
-            }
-            cerr << "node=" << node << ", " << "score=" << score << endl;
-            return score;
-        });
+                cerr << "node=" << node << ", " << "score=" << score << endl;
+                return score;
+            }).id;
+        }
+        WorldAgent target = world->agents[target_id];
         minimax_order.clear();
         for (const auto& agent: polices)
             minimax_order.push_back(agent);
@@ -246,7 +249,7 @@ struct AIPolice : AIAgent {
         choice_value.assign(minimax_order.size(), INT_MAX);
         cerr << "minimax: ";
         for (const auto& agent: minimax_order) {
-            cerr << "(" << agent.id << ", ";
+            cerr << "(" << agent.id << ", " << agent.node << ", ";
             if (agent.type == HAS::AgentType::POLICE)
                 cerr << "police";
             else
