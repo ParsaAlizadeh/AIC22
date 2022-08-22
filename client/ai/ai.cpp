@@ -284,7 +284,7 @@ struct AIPolice : AIAgent {
                 for (int j = 0; j < minimax_order.size()-1; j++) {
                     const auto& police = minimax_order[j];
                     int thief_dist = world->get_dist(target, i);
-                    int police_dist = world->get_dist(police, i) + (world->current_turn - target.last_seen) / 2;
+                    int police_dist = world->get_dist(police, i) + min(2, (world->current_turn - target.last_seen) / 2);
                     if(thief_dist >= police_dist - 1){
                         flag = 0;
                     }
