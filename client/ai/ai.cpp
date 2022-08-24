@@ -294,7 +294,7 @@ struct AIPolice : AIAgent {
             }
             return score;
         }
-        const auto& now = minimax_order[ind];
+        WorldAgent now = minimax_order[ind];
         if (now.type == HAS::AgentType::POLICE) {
             int result = INT_MAX;
             for (const auto& edge : world->get_options(now.node)) {
