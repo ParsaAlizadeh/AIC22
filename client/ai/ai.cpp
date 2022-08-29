@@ -310,9 +310,8 @@ struct AIPolice : AIAgent {
                     choice_value[ind] = score;
                     choice_node[ind] = edge.v;
                 }
-                if (beta <= alpha) {
+                if (beta <= alpha)
                     return beta;
-                }
             }
             return beta;
         } else {
@@ -323,7 +322,6 @@ struct AIPolice : AIAgent {
             for (const auto& edge : world->get_options(now.node)) {
                 if (edge.price > now.balance)
                     continue;
-                _i++;
                 WorldAgent nxt = now;
                 nxt.node = edge.v;
                 nxt.balance -= edge.price;
@@ -331,9 +329,8 @@ struct AIPolice : AIAgent {
                 int score = minimax(level, ind+1, alpha, beta);
                 minimax_order[ind] = now;
                 alpha = max(alpha, score);
-                if (beta <= alpha) {
+                if (beta <= alpha)
                     return alpha;
-                }
             }
             return alpha;
         }
