@@ -20,4 +20,7 @@ Graph::Graph(const HAS::Graph& g) {
         adj[x].push_back(Edge{.id=path.id(), .u=x, .v=y, .price=path.price()});
         adj[y].push_back(Edge{.id=path.id(), .u=y, .v=x, .price=path.price()});
     }
+    for (int i = 1; i <= n; i++) {
+        adj[i].push_back(Edge{.id=-1, .u=i, .v=i, .price=0});
+    }
 }
