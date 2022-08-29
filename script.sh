@@ -83,14 +83,19 @@ post_game_check() {
     else
         loggood 'no server exception'
     fi
-    sdate=$(stat -c '%Y' logs/last_game)
+    sdate=$(stat -c '%Y' logs/last_game.txt)
     for f in $(ls logs/client/); do
         file="logs/client/$f"
         cdate=$(stat -c '%Y' $file)
         if [[ $cdate < $sdate ]]; then
             loginfo "old ${file}"
         elif grep 'balance mismatch!' $file &>/dev/null; then
-            logbad "balance mismatch agent=$(head -n1 $file)"
+            amounts=$(mktemp)
+            grep 'balance mismatch!' $file | awk '{ print $4 - $3 }' | sort -n | cat > $amounts
+            min_amount=$(head -n1 $amounts)
+            max_amount=$(tail -n1 $amounts)
+            rm $amounts
+            logbad "balance mismatch agent=$(head -n1 $file) margin=($min_amount,$max_amount)"
         else
             loggood "balance matches agent=$(head -n1 $file)"
         fi
