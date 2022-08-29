@@ -257,7 +257,7 @@ struct AIPolice : AIAgent {
             cerr << ") ";
         }
         cerr << endl;
-        minimax(1, 0);
+        minimax(1, 0, INT_MIN, INT_MAX);
         int choice;
         for (int i = 0; i < minimax_order.size(); i++) {
             if (minimax_order[i].id == me.id) {
@@ -267,7 +267,7 @@ struct AIPolice : AIAgent {
         }
         return choice;
     }
-    int minimax(int level, int ind) {
+    int minimax(int level, int ind, int alpha, int beta) {
         if (ind == minimax_order.size()) {
             ind = 0;
             level--;
@@ -296,7 +296,6 @@ struct AIPolice : AIAgent {
         }
         WorldAgent now = minimax_order[ind];
         if (now.type == HAS::AgentType::POLICE) {
-            int result = INT_MAX;
             for (const auto& edge : world->get_options(now.node)) {
                 if (edge.price > now.balance)
                     continue;
@@ -304,21 +303,22 @@ struct AIPolice : AIAgent {
                 nxt.node = edge.v;
                 nxt.balance -= edge.price;
                 minimax_order[ind] = nxt;
-                int score = minimax(level, ind+1);
+                int score = minimax(level, ind+1, alpha, beta);
                 minimax_order[ind] = now;
-                result = min(result, score);
+                beta = min(beta, score);
                 if (score < choice_value[ind]) { // and first layer
                     choice_value[ind] = score;
                     choice_node[ind] = edge.v;
                 }
+                if (beta <= alpha)
+                    return beta;
             }
-            return result;
+            return beta;
         } else {
-            int result = INT_MIN;
             if (now.last_seen == world->current_turn)
                 for (int i = 0; i < minimax_order.size() - 1; i++)
                     if (now.node == minimax_order[i].node)
-                        return result;
+                        return alpha;
             for (const auto& edge : world->get_options(now.node)) {
                 if (edge.price > now.balance)
                     continue;
@@ -326,11 +326,13 @@ struct AIPolice : AIAgent {
                 nxt.node = edge.v;
                 nxt.balance -= edge.price;
                 minimax_order[ind] = nxt;
-                int score = minimax(level, ind+1);
+                int score = minimax(level, ind+1, alpha, beta);
                 minimax_order[ind] = now;
-                result = max(result, score);
+                alpha = max(alpha, score);
+                if (beta <= alpha)
+                    return alpha;
             }
-            return result;
+            return alpha;
         }
     }
 };
