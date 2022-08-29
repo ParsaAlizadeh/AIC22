@@ -6,6 +6,11 @@ set -o pipefail
 script_path=$(dirname "$(readlink -f "$0")")
 repo_url="https://raw.githubusercontent.com/SharifAIChallenge/AIC22-Game/main"
 
+white='\e[0m'
+red='\e[0;31m'
+green='\e[0;32m'
+blue='\e[0;34m'
+
 mkcd() {
     mkdir -p $1
     cd $1
@@ -36,12 +41,14 @@ mappath() {
 run() {
     cd server/
     rm -f logs/details.log
+    echo 'nothing here' > logs/last_game.txt
     java -jar hideandseek-*.jar \
         --first-team="$(agentpath $1)" \
         --second-team="$(agentpath $2)" \
         "$(mappath $3)/map.yml" \
         "$(mappath $3)/map.json" \
         | tee logs/stdout.txt
+    post_game_check $@
     mv logs/server.log "logs/server_$(date +"%Y_%m_%d_%H_%M_%S").log"
 }
 
@@ -67,6 +74,50 @@ visual() {
 package() {
     cd client/
     ls | grep -Ev 'build$' | xargs zip -r "$script_path/client.zip"
+}
+
+post_game_check() {
+    if grep 'GameException' logs/stdout.txt &>/dev/null; then
+        logbad 'server exception in stdout.txt (maybe timeout?)'
+        grep --color 'GameException' logs/stdout.txt
+    else
+        loggood 'no server exception'
+    fi
+    sdate=$(stat -c '%Y' logs/last_game)
+    for f in $(ls logs/client/); do
+        file="logs/client/$f"
+        cdate=$(stat -c '%Y' $file)
+        if [[ $cdate < $sdate ]]; then
+            loginfo "old ${file}"
+        elif grep 'balance mismatch!' $file &>/dev/null; then
+            logbad "balance mismatch agent=$(head -n1 $file)"
+        else
+            loggood "balance matches agent=$(head -n1 $file)"
+        fi
+    done
+    inspect logs/server.log $1 $2
+}
+
+inspect() {
+    if grep 'FIRST_WINS' $1 &>/dev/null; then
+        loginfo "first team wins ($2)"
+    else
+        loginfo "second team wins ($3)"
+    fi
+    turn=$(grep 'toTurnNumber' $1 | tail -n1 | sed -E 's/.*toTurnNumber":"([0-9]*).*/\1/g')
+    loginfo "game ends in $turn turns"
+}
+
+logbad() {
+    echo -e "$red [BAD] $@ $white"
+}
+
+loggood() {
+    echo -e "$green [GOOD] $@ $white"
+}
+
+loginfo() {
+    echo -e "$blue [INFO] $@ $white"
 }
 
 $@
