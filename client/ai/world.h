@@ -60,6 +60,18 @@ struct World {
             maps.push_back(cur);
         }
     }
+    void preprocess_options(){
+        options.push_back({});
+        for(int i = 1; i <= graph->n; i++){
+            vector<vector<Edge>> cur = graph->adj;
+            for(int j = 1; j <= graph->n; j++){
+                sort(all(cur[j]), [&] (Edge const& x, Edge const& y)  {
+                    return get_dist(i, x.v, INF) < get_dist(i, y.v, INF);
+                });
+            }
+            options.push_back(cur);
+        }
+    }
     vector<ShortestPath*>& get_map(double wallet) {
         for (int i = edge_cost.size()-1; i >= 0; i--)
             if (edge_cost[i] <= wallet)
@@ -85,18 +97,6 @@ struct World {
             if (edge.v == v)
                 return edge.price;
         return 0;
-    }
-    void preprocess_options(){
-        options.push_back({});
-        for(int i = 1; i <= graph->n; i++){
-            vector<vector<Edge>> cur = graph->adj;
-            for(int j = 0; j <= graph->n; j++){
-                sort(all(cur[j]), [&] (Edge const& x, Edge const& y)  {
-                    return get_dist(i, x.v, INF) < get_dist(i, y.v , INF);
-                });
-            }
-            options.push_back(cur);
-        }
     }
     void update_agent(const GameView &gameView, const HAS::Agent &ag, int turn) {
         if (!agents.count(ag.id())) {
