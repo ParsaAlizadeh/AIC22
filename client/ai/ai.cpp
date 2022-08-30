@@ -324,8 +324,7 @@ struct AIPolice : AIAgent {
                 for (int i = 0; i < minimax_order.size() - 1; i++)
                     if (now.node == minimax_order[i].node)
                         return alpha;
-            const auto& target = minimax_order[0];
-            for (const auto& edge : world->get_options(now.node, target.node)) {
+            for (const auto& edge : world->get_options(now.node)) {
                 if (edge.price > now.balance)
                     continue;
                 WorldAgent nxt = now;
