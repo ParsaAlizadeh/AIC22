@@ -90,11 +90,11 @@ struct AIAgent {
     virtual int starting_node(const GameView &gameView) {
         cerr << "bad" << endl;
         return 2;
-    };
+    }
     virtual int turn(const GameView &gameView) {
         cerr << "bad" << endl;
         return 2;
-    };
+    }
     ShortestPath* get_selfmap(const GameView &gameView) {
         return world->get_map(gameView.balance())[gameView.viewer().node_id()];
     }
