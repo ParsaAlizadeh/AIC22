@@ -32,6 +32,7 @@ struct WorldAgent{
 struct World {
     const Graph *graph;
     vector<vector<ShortestPath*>> maps;
+    vector<vector<vector<Edge>>> options;
     vector<double> edge_cost;
     map<int, WorldAgent> agents;
     int current_turn;
@@ -39,6 +40,7 @@ struct World {
     void initialize(const GameView &gameView, const Graph* g) {
         graph = g;
         preprocess_map(gameView);
+        preprocess_options();
     }
     void preprocess_map(const GameView &gameView) {
         const auto &g = gameView.config().graph();
@@ -83,6 +85,18 @@ struct World {
             if (edge.v == v)
                 return edge.price;
         return 0;
+    }
+    void preprocess_options(){
+        options.push_back({});
+        for(int i = 1; i <= graph->n; i++){
+            vector<vector<Edge>> cur = graph->adj;
+            for(int j = 0; j <= graph->n; j++){
+                sort(all(cur[j]), [&] (Edge const& x, Edge const& y)  {
+                    return get_dist(i, x.v, INF) < get_dist(i, y.v , INF);
+                });
+            }
+            options.push_back(cur);
+        }
     }
     void update_agent(const GameView &gameView, const HAS::Agent &ag, int turn) {
         if (!agents.count(ag.id())) {
@@ -144,5 +158,8 @@ struct World {
     }
     const vector<Edge>& get_options(int node) {
         return graph->adj[node];
+    }
+    const vector<Edge>& get_options(int node, int target) {
+        return options[target][node];
     }
 };

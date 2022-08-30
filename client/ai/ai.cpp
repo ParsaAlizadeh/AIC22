@@ -229,7 +229,7 @@ struct AIPolice : AIAgent {
                     int flag = 1;
                     for(const auto &police : polices){
                         int thief_dist = world->get_dist(agent, i);
-                        int police_dist = world->get_dist(police, i) + (world->current_turn - agent.last_seen) / 2;
+                        int police_dist = world->get_dist(police, i) + min(2 , (world->current_turn - agent.last_seen) / 2);
                         if(thief_dist >= police_dist - 1){
                             flag = 0;
                         }
@@ -295,8 +295,9 @@ struct AIPolice : AIAgent {
             return score;
         }
         WorldAgent now = minimax_order[ind];
+        WorldAgent target = minimax_order.back();
         if (now.type == HAS::AgentType::POLICE) {
-            for (const auto& edge : world->get_options(now.node)) {
+            for (const auto& edge : world->get_options(now.node, target.node)) {
                 if (edge.price > now.balance)
                     continue;
                 WorldAgent nxt = now;
