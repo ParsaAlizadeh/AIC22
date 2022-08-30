@@ -3,7 +3,7 @@
 
 #include "hide_and_seek.pb.h"
 
-const double INF = std::numeric_limits<double>::max();
+const double INF = 1e70;
 
 namespace Types {
     using GameView = ir::sharif::aic::hideandseek::api::grpc::GameView;

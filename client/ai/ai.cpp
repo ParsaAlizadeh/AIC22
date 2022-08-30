@@ -277,7 +277,7 @@ struct AIPolice : AIAgent {
             int score = 0;
             for (int i = 0; i < minimax_order.size()-1; i++) {
                 const auto& police = minimax_order[i];
-                score += world->get_dist(police.node, target.node, police.balance);
+                score += world->get_dist(police.node, target.node, INF);
             }
             for(int i = 1; i <= graph->n; i++){
                 int flag = 1;
@@ -290,29 +290,31 @@ struct AIPolice : AIAgent {
                         break;
                     }
                 }
-                score += flag;
+                // score += flag;
             }
             return score;
         }
         WorldAgent now = minimax_order[ind];
         if (now.type == HAS::AgentType::POLICE) {
             const auto& target = minimax_order.back();
-            for (const auto& edge : world->get_options(now.node, target.node)) {
+            const auto& options = world->get_options(now.node, target.node);
+            for (int i = 0; i < 50 && i < options.size(); i++) {
+                const auto& edge = options[i];
                 if (edge.price > now.balance)
                     continue;
                 WorldAgent nxt = now;
                 nxt.node = edge.v;
                 nxt.balance -= edge.price;
                 minimax_order[ind] = nxt;
-                int score = minimax(level, ind+1, alpha, beta);
+                int score = minimax(level, ind+1, INT_MIN, INT_MAX); //alpha, beta);
                 minimax_order[ind] = now;
                 beta = min(beta, score);
                 if (score < choice_value[ind]) { // and first layer
                     choice_value[ind] = score;
                     choice_node[ind] = edge.v;
                 }
-                if (beta <= alpha)
-                    return beta;
+                // if (beta <= alpha)
+                //     return beta;
             }
             return beta;
         } else {
@@ -321,18 +323,20 @@ struct AIPolice : AIAgent {
                     if (now.node == minimax_order[i].node)
                         return alpha;
             const auto& target = minimax_order[0];
-            for (const auto& edge : world->get_options(now.node, target.node)) {
+            const auto& options = world->get_options(now.node, target.node);
+            for (int i = 0; i < 50 && i < options.size(); i++) {
+                const auto& edge = options[i];
                 if (edge.price > now.balance)
                     continue;
                 WorldAgent nxt = now;
                 nxt.node = edge.v;
                 nxt.balance -= edge.price;
                 minimax_order[ind] = nxt;
-                int score = minimax(level, ind+1, alpha, beta);
+                int score = minimax(level, ind+1, INT_MIN, INT_MAX); //alpha, beta);
                 minimax_order[ind] = now;
                 alpha = max(alpha, score);
-                if (beta <= alpha)
-                    return alpha;
+                // if (beta <= alpha)
+                //     return alpha;
             }
             return alpha;
         }
@@ -370,8 +374,12 @@ namespace AI {
     }
 
     int police_move_ai(const GameView &gameView) {
+        const auto begin_time = chrono::high_resolution_clock::now();;
         log_turn(gameView);
         world->update(gameView);
-        return aiagent->turn(gameView);
+        int result = aiagent->turn(gameView);
+        const auto end_time = chrono::high_resolution_clock::now();
+        cerr << "== passed " << chrono::duration<double, milli>(end_time-begin_time).count() << endl;
+        return result;
     }
 }
