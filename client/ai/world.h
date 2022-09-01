@@ -217,12 +217,14 @@ struct World {
         for (; last_message_index < chatbox.size(); last_message_index++) {
             const auto& chat = chatbox[last_message_index];
             cerr << "a new message index=" << last_message_index << endl;
-            // update_chat(gameView, chat, turn-2);
+            update_chat(gameView, chat, turn-2);
         }
     }
     void update_chat(const GameView &gameView, const HAS::Chat& chat, int turn) {
         const auto& text = chat.text();
         cerr << "update from a chat: text=" << text << " id=" << chat.fromagentid() << endl;
+        if (chat.fromagentid() != get_self(gameView).id)
+            agents[chat.fromagentid()].balance -= text.size();
         for (int i = 0; i < text.size(); i += 12) {
             const auto substr = text.substr(i, 12);
             read_from_text(gameView, text, turn);
@@ -262,9 +264,9 @@ struct World {
         message_to_send += write_to_text(agent);
     }
     void send_chatbox(const GameView &gameView, const Phone* phone) {
-        if (message_to_send.size()) {
+        int id = get_self(gameView).id;
+        if (message_to_send.size() || agents[id].balance >= message_to_send.size()) {
             phone->send_message(message_to_send);
-            int id = get_self(gameView).id;
             agents[id].balance -= message_to_send.size();
         }
         message_to_send = "";

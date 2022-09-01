@@ -187,60 +187,41 @@ struct AIPolice : AIAgent {
         for(const auto& turn : visible){
             visible_turns.push_back(turn);
         }
-        // if (enemies.empty()) {
-        //     if(starting_target == -1) {
-        //         mt19937 rng = mt19937(chrono::steady_clock::now().time_since_epoch().count());
-        //         int cnt_edge = (visible_turns[0] - turn_number) / 2;
-        //         vector<int> max_dist , options;
-        //         int min_r = graph->n * 10;
-        //         max_dist.push_back(min_r);
-        //         for(int i = 1; i <= graph->n; i++){
-        //             max_dist.push_back(-1);
-        //             if(selfmap->dist[i] > cnt_edge)
-        //                 continue;
-        //             for(int j = 1; j <= graph->n; j++)
-        //                 max_dist[i] = max(max_dist[i] , world->get_dist(i, j, INF));
-        //             min_r = min(min_r , max_dist[i]);
-        //         }
-        //         for(int i = 1; i <= graph->n; i++)
-        //             if(max_dist[i] <= min_r + 1)
-        //                 options.push_back(i);
-        //         int ind = rng() % options.size();
-        //         starting_target = options[ind];
-        //         cerr << "starting target=" << starting_target << ", " << "options=" << options.size() << endl;
-        //     }
-        //     return selfmap->first[starting_target];
-        // }
+        if (enemies.empty()) {
+            if(starting_target == -1) {
+                mt19937 rng = mt19937(chrono::steady_clock::now().time_since_epoch().count());
+                int cnt_edge = (visible_turns[0] - turn_number) / 2;
+                vector<int> max_dist , options;
+                int min_r = graph->n * 10;
+                max_dist.push_back(min_r);
+                for(int i = 1; i <= graph->n; i++){
+                    max_dist.push_back(-1);
+                    if(selfmap->dist[i] > cnt_edge)
+                        continue;
+                    for(int j = 1; j <= graph->n; j++)
+                        max_dist[i] = max(max_dist[i] , world->get_dist(i, j, INF));
+                    min_r = min(min_r , max_dist[i]);
+                }
+                for(int i = 1; i <= graph->n; i++)
+                    if(max_dist[i] <= min_r + 1)
+                        options.push_back(i);
+                int ind = rng() % options.size();
+                starting_target = options[ind];
+                cerr << "starting target=" << starting_target << ", " << "options=" << options.size() << endl;
+            }
+            return selfmap->first[starting_target];
+        }
         // send visible enemies
         for (const auto& theif : enemies) {
             if (theif.last_seen == world->current_turn) {
                 world->send_chat(theif);
             }
         }
-        return 1;
         const auto &polices = world->get_teammates(gameView);
-        // target_id = min_by<WorldAgent,int>(enemies, [&] (WorldAgent const& agent) {
-        //     int score = 0, node = agent.node;
-        //     for (const auto &police : polices)
-        //         score += world->get_dist(node, police.node, INF);
-        //     for (int i = 1; i <= graph->n; i++){
-        //         int flag = 1;
-        //         for(const auto &police : polices){
-        //             int thief_dist = world->get_dist(agent, i);
-        //             int police_dist = world->get_dist(police, i) + min(2, (world->current_turn - agent.last_seen) / 2);
-        //             if (thief_dist >= police_dist - 1) {
-        //                 flag = 0;
-        //             }
-        //         }
-        //         score += flag;
-        //     }
-        //     cerr << "node=" << node << ", " << "score=" << score << endl;
-        //     return score;
-        // }).id;
         vector<int> target_options;
         vector<int> target_scores;
         for (const auto& agent : enemies) {
-            if (agent.last_seen < world->current_turn - 4)
+            if (agent.last_seen < world->current_turn - 6)
                 continue;
             int score = 0, node = agent.node;
             for (const auto &police : polices)
