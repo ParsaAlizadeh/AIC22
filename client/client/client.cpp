@@ -19,6 +19,14 @@ namespace Client {
 
     using namespace ir::sharif::aic::hideandseek::api::grpc;
 
+    AgentType get_general_type(AgentType type) {
+        if (type == BATMAN)
+            return POLICE;
+        if (type == JOKER)
+            return THIEF;
+        return type;
+    }
+
     void throw_if_error(const Status &status) {
         if (!(status).ok()) {
 //            throw Exceptions::RpcFailedException((status).error_code(), (status).error_message());
@@ -55,8 +63,8 @@ namespace Client {
                 } else if (gameView.status() == GameStatus::ONGOING) {
                     if(my_turn == gameView.turn().turnnumber())
                         continue;
-                    bool both_theif  = gameView.turn().turntype() == TurnType::THIEF_TURN && gameView.viewer().type() == AgentType::THIEF;
-                    bool both_police = gameView.turn().turntype() == TurnType::POLICE_TURN && gameView.viewer().type() == AgentType::POLICE;
+                    bool both_theif  = gameView.turn().turntype() == TurnType::THIEF_TURN && get_general_type(gameView.viewer().type()) == AgentType::THIEF;
+                    bool both_police = gameView.turn().turntype() == TurnType::POLICE_TURN && get_general_type(gameView.viewer().type()) == AgentType::POLICE;
                     if(!both_police && !both_theif)
                         continue;
                     perform_move(gameView);
@@ -106,7 +114,7 @@ namespace Client {
             const auto &viewer = gameView.viewer();
             int start_node_id;
             AI::initialize(gameView, Phone(this));
-            if (viewer.type() == AgentType::THIEF) {
+            if (get_general_type(viewer.type()) == AgentType::THIEF) {
                 start_node_id = AI::get_thief_starting_node(gameView);
             } else {
                 start_node_id = 3; // todo dummy
@@ -117,7 +125,7 @@ namespace Client {
         void perform_move(const GameView &gameView) const {
             const auto &viewer = gameView.viewer();
             int to_node_id;
-            if (viewer.type() == AgentType::THIEF) {
+            if (get_general_type(viewer.type()) == AgentType::THIEF) {
                 to_node_id = AI::thief_move_ai(gameView);
             } else {
                 to_node_id = AI::police_move_ai(gameView);

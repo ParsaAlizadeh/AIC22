@@ -70,11 +70,19 @@ void redirect_cerr(int id) {
 }
 
 void log_agent(const HAS::Agent &agent) {
-    cerr << "("
-        << agent.id() << ", "
-        << (agent.team() == HAS::Team::FIRST ? "First" : "Second") << ", "
-        << (agent.type() == HAS::AgentType::POLICE ? "Police" : "Theif")
-        << ")";
+    cerr << "(";
+    cerr << agent.id() << ", ";
+    cerr << (agent.team() == HAS::Team::FIRST ? "First" : "Second") << ", ";
+    if (agent.type() == HAS::AgentType::POLICE) {
+        cerr << "police";
+    } else if (agent.type() == HAS::AgentType::BATMAN) {
+        cerr << "batman";
+    } else if (agent.type() == HAS::AgentType::THIEF) {
+        cerr << "theif";
+    } else {
+        cerr << "joker";
+    }
+    cerr << ")";
 }
 
 void log_turn(const GameView &gameView) {
@@ -250,10 +258,15 @@ struct AIPolice : AIAgent {
         cerr << "minimax: ";
         for (const auto& agent: minimax_order) {
             cerr << "(" << agent.id << ", " << agent.node << ", ";
-            if (agent.type == HAS::AgentType::POLICE)
+            if (agent.type == HAS::AgentType::POLICE) {
                 cerr << "police";
-            else
-                cerr << "thief";
+            } else if (agent.type == HAS::AgentType::BATMAN) {
+                cerr << "batman";
+            } else if (agent.type == HAS::AgentType::THIEF) {
+                cerr << "theif";
+            } else {
+                cerr << "joker";
+            }
             cerr << ") ";
         }
         cerr << endl;
@@ -295,7 +308,7 @@ struct AIPolice : AIAgent {
             return score;
         }
         WorldAgent now = minimax_order[ind];
-        if (now.type == HAS::AgentType::POLICE) {
+        if (world->get_general_type(now.type) == HAS::AgentType::POLICE) {
             const auto& target = minimax_order.back();
             int visited_edges = 0;
             for (const auto& edge : world->get_options(now.node, target.node)) {
@@ -353,10 +366,11 @@ namespace AI {
         world = new World();
         world->initialize(gameView, graph);
         world->update(gameView);
-        if (me.type() == HAS::AgentType::POLICE)
+        if (world->get_general_type(me.type()) == HAS::AgentType::POLICE) {
             aiagent = new AIPolice();
-        else
+        } else {
             aiagent = new AIThief();
+        }
         aiagent->initialize(gameView);
     }
 

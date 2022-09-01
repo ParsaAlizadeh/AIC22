@@ -86,8 +86,16 @@ struct World {
     int get_dist(WorldAgent agent , int v){
         return get_dist(agent.node, v, agent.balance);
     }
+    HAS::AgentType get_general_type(HAS::AgentType type) {
+        if (type == HAS::AgentType::BATMAN)
+            return HAS::AgentType::POLICE;
+        if (type == HAS::AgentType::JOKER)
+            return HAS::AgentType::THIEF;
+        return type;
+    }
     double get_income_by_type(const GameView &gameView, HAS::AgentType type) {
         auto const& settings = gameView.config().incomesettings();
+        type = get_general_type(type);
         if (type == HAS::POLICE)
             return settings.policeincomeeachturn();
         return settings.thievesincomeeachturn();
@@ -137,9 +145,12 @@ struct World {
         const auto& self = get_self(gameView);
         for (const auto& p : agents) {
             const auto& agent = p.second;
-            if (agent.dead) continue;
-            if (agent.team != self.team) continue;
-            if (agent.type != self.type) continue;
+            if (agent.dead)
+                continue;
+            if (agent.team != self.team)
+                continue;
+            if (get_general_type(agent.type) != get_general_type(self.type))
+                continue;
             result.push_back(agent);
         }
         return result;
@@ -149,9 +160,12 @@ struct World {
         const auto& self = get_self(gameView);
         for (const auto& p : agents) {
             const auto& agent = p.second;
-            if (agent.dead) continue;
-            if (agent.team == self.team) continue;
-            if (agent.type == self.type) continue;
+            if (agent.dead)
+                continue;
+            if (agent.team == self.team)
+                continue;
+            if (get_general_type(agent.type) == get_general_type(self.type))
+                continue;
             result.push_back(agent);
         }
         return result;
