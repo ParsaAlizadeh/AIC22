@@ -42,7 +42,7 @@ run() {
     cd server/
     rm -f logs/details.log
     echo 'nothing here' > logs/last_game.txt
-    java -jar hideandseek-0.1.4.jar \
+    java -jar hideandseek-0.2.1.jar \
         --first-team="$(agentpath $1)" \
         --second-team="$(agentpath $2)" \
         "$(mappath $3)/map.yml" \
