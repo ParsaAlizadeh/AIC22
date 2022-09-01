@@ -69,22 +69,6 @@ void redirect_cerr(int id) {
     // freopen("/dev/null", "w", stderr);
 }
 
-void log_agent(const HAS::Agent &agent) {
-    cerr << "(";
-    cerr << agent.id() << ", ";
-    cerr << (agent.team() == HAS::Team::FIRST ? "First" : "Second") << ", ";
-    if (agent.type() == HAS::AgentType::POLICE) {
-        cerr << "police";
-    } else if (agent.type() == HAS::AgentType::BATMAN) {
-        cerr << "batman";
-    } else if (agent.type() == HAS::AgentType::THIEF) {
-        cerr << "theif";
-    } else {
-        cerr << "joker";
-    }
-    cerr << ")";
-}
-
 void log_turn(const GameView &gameView) {
     cerr << "turn=" << gameView.turn().turnnumber() << endl;
 }
@@ -118,72 +102,74 @@ struct AIThief : AIAgent {
         policemap = new ShortestPath(graph->n);
     }
     int starting_node(const GameView &gameView) {
-        mt19937 rng = mt19937(SEED);
-        vector<int> node_options;
-        auto tmpmap = world->get_map_from(1, INF);
-        int maxdist = 0;
-        for (int i = 1; i < graph->n; i++)
-            maxdist = max(maxdist, tmpmap->dist[i]);
-        for (int i = 1; i < graph->n; i++)
-            if (tmpmap->dist[i] >= maxdist - 2)
-                node_options.push_back(i);
-        const auto &me = world->get_self(gameView);
-        const auto &teammates = world->get_teammates(gameView);
-        vector<int> ans;
-        int max_sum = -1;
-        for(int i = 0 ; i < 10 ; i++){
-            int sum = 0;
-            vector<int> nodes;
-            for(int j = 0 ; j < teammates.size(); j++)
-                nodes.push_back(node_options[rng() % node_options.size()]);
-            for(int j : nodes)
-                for(int k : nodes)
-                    sum += world->get_dist(j, k, INF);
-            if(sum > max_sum){
-                max_sum = sum;
-                ans = nodes;
-            }
-        }
-        for(int i = 0 ; i < ans.size() ; i++)
-            if(teammates[i].id == me.id)
-                return ans[i];
-        int ind = rng() % node_options.size();
-        return node_options[ind];
+        return 8;
+        // mt19937 rng = mt19937(SEED);
+        // vector<int> node_options;
+        // auto tmpmap = world->get_map_from(1, INF);
+        // int maxdist = 0;
+        // for (int i = 1; i < graph->n; i++)
+        //     maxdist = max(maxdist, tmpmap->dist[i]);
+        // for (int i = 1; i < graph->n; i++)
+        //     if (tmpmap->dist[i] >= maxdist - 2)
+        //         node_options.push_back(i);
+        // const auto &me = world->get_self(gameView);
+        // const auto &teammates = world->get_teammates(gameView);
+        // vector<int> ans;
+        // int max_sum = -1;
+        // for(int i = 0 ; i < 10 ; i++){
+        //     int sum = 0;
+        //     vector<int> nodes;
+        //     for(int j = 0 ; j < teammates.size(); j++)
+        //         nodes.push_back(node_options[rng() % node_options.size()]);
+        //     for(int j : nodes)
+        //         for(int k : nodes)
+        //             sum += world->get_dist(j, k, INF);
+        //     if(sum > max_sum){
+        //         max_sum = sum;
+        //         ans = nodes;
+        //     }
+        // }
+        // for(int i = 0 ; i < ans.size() ; i++)
+        //     if(teammates[i].id == me.id)
+        //         return ans[i];
+        // int ind = rng() % node_options.size();
+        // return node_options[ind];
     }
     int turn(const GameView &gameView) {
-        const auto &me = world->get_self(gameView);
-        const auto &enemies = world->get_enemies(gameView);
-        const auto &teammates = world->get_teammates(gameView);
-        auto selfmap = get_selfmap(gameView);
-        vector<int> police_nodes;
-        for (const auto &police : enemies)
-            police_nodes.push_back(police.node);
-        policemap->update(graph, police_nodes, INF);
-        vector<int> node_options;
-        for (int i = 1; i < graph->n; i++) {
-            if (selfmap->dist[i] < policemap->dist[i])
-                node_options.push_back(i);
-        }
-        shuffle(begin(node_options), end(node_options), rng);
-        int target = random_max_by<int,int>(rng , node_options, [&] (int node) {
-            int score = 0;
-            for (const auto &police: enemies){
-                int dist = world->get_dist(node, police.node, INF);
-                score += dist;
-                if(dist == 1){
-                    score -= 1000 * 1000;
-                }
-            }
-            for (const auto &thief : teammates)
-                score += world->get_dist(node, thief.node, INF);
-            cerr << "score " << node << " " << score << " ";
-            for(int i = 1; i <= graph->n; i++)
-                if(world->get_dist(node, i , me.balance) <= 2)
-                    score++;
-            cerr << score << endl;
-            return score;
-        });
-        return selfmap->first[target];
+        return 8;
+        // const auto &me = world->get_self(gameView);
+        // const auto &enemies = world->get_enemies(gameView);
+        // const auto &teammates = world->get_teammates(gameView);
+        // auto selfmap = get_selfmap(gameView);
+        // vector<int> police_nodes;
+        // for (const auto &police : enemies)
+        //     police_nodes.push_back(police.node);
+        // policemap->update(graph, police_nodes, INF);
+        // vector<int> node_options;
+        // for (int i = 1; i < graph->n; i++) {
+        //     if (selfmap->dist[i] < policemap->dist[i])
+        //         node_options.push_back(i);
+        // }
+        // shuffle(begin(node_options), end(node_options), rng);
+        // int target = random_max_by<int,int>(rng , node_options, [&] (int node) {
+        //     int score = 0;
+        //     for (const auto &police: enemies){
+        //         int dist = world->get_dist(node, police.node, INF);
+        //         score += dist;
+        //         if(dist == 1){
+        //             score -= 1000 * 1000;
+        //         }
+        //     }
+        //     for (const auto &thief : teammates)
+        //         score += world->get_dist(node, thief.node, INF);
+        //     cerr << "score " << node << " " << score << " ";
+        //     for(int i = 1; i <= graph->n; i++)
+        //         if(world->get_dist(node, i , me.balance) <= 2)
+        //             score++;
+        //     cerr << score << endl;
+        //     return score;
+        // });
+        // return selfmap->first[target];
     }
 };
 
@@ -227,58 +213,55 @@ struct AIPolice : AIAgent {
             }
             return selfmap->first[starting_target];
         }
-        const auto &polices = world->get_teammates(gameView);
-        if(target_id == -1 || world->agents[target_id].dead){
-            target_id = min_by<WorldAgent,int>(enemies, [&] (WorldAgent const& agent) {
-                int score = 0, node = agent.node;
-                for (const auto &police : polices)
-                    score += world->get_dist(node, police.node, INF);
-                for (int i = 1; i <= graph->n; i++){
-                    int flag = 1;
-                    for(const auto &police : polices){
-                        int thief_dist = world->get_dist(agent, i);
-                        int police_dist = world->get_dist(police, i) + min(2 , (world->current_turn - agent.last_seen) / 2);
-                        if(thief_dist >= police_dist - 1){
-                            flag = 0;
-                        }
-                    }
-                    score += flag;
-                }
-                cerr << "node=" << node << ", " << "score=" << score << endl;
-                return score;
-            }).id;
-        }
-        WorldAgent target = world->agents[target_id];
-        minimax_order.clear();
-        for (const auto& agent: polices)
-            minimax_order.push_back(agent);
-        minimax_order.push_back(target);
-        choice_node.assign(minimax_order.size(), 0);
-        choice_value.assign(minimax_order.size(), INT_MAX);
-        cerr << "minimax: ";
-        for (const auto& agent: minimax_order) {
-            cerr << "(" << agent.id << ", " << agent.node << ", ";
-            if (agent.type == HAS::AgentType::POLICE) {
-                cerr << "police";
-            } else if (agent.type == HAS::AgentType::BATMAN) {
-                cerr << "batman";
-            } else if (agent.type == HAS::AgentType::THIEF) {
-                cerr << "theif";
-            } else {
-                cerr << "joker";
-            }
-            cerr << ") ";
-        }
-        cerr << endl;
-        minimax(1, 0, INT_MIN, INT_MAX);
-        int choice;
-        for (int i = 0; i < minimax_order.size(); i++) {
-            if (minimax_order[i].id == me.id) {
-                choice = choice_node[i];
-                cerr << "choice=" << choice << " score=" << choice_value[i] << endl;
+        // send visible enemies
+        for (const auto& theif : enemies) {
+            if (theif.last_seen == world->current_turn) {
+                world->send_chat(theif);
             }
         }
-        return choice;
+        return 1;
+        // const auto &polices = world->get_teammates(gameView);
+        // if (target_id == -1 || world->agents[target_id].dead) {
+        //     target_id = min_by<WorldAgent,int>(enemies, [&] (WorldAgent const& agent) {
+        //         int score = 0, node = agent.node;
+        //         for (const auto &police : polices)
+        //             score += world->get_dist(node, police.node, INF);
+        //         for (int i = 1; i <= graph->n; i++){
+        //             int flag = 1;
+        //             for(const auto &police : polices){
+        //                 int thief_dist = world->get_dist(agent, i);
+        //                 int police_dist = world->get_dist(police, i) + min(2, (world->current_turn - agent.last_seen) / 2);
+        //                 if (thief_dist >= police_dist - 1) {
+        //                     flag = 0;
+        //                 }
+        //             }
+        //             score += flag;
+        //         }
+        //         cerr << "node=" << node << ", " << "score=" << score << endl;
+        //         return score;
+        //     }).id;
+        // }
+        // WorldAgent target = world->agents[target_id];
+        // minimax_order.clear();
+        // for (const auto& agent: polices)
+        //     minimax_order.push_back(agent);
+        // minimax_order.push_back(target);
+        // choice_node.assign(minimax_order.size(), 0);
+        // choice_value.assign(minimax_order.size(), INT_MAX);
+        // cerr << "minimax: ";
+        // for (const auto& agent: minimax_order) {
+        //     log_agent(agent);
+        // }
+        // cerr << endl;
+        // minimax(1, 0, INT_MIN, INT_MAX);
+        // int choice;
+        // for (int i = 0; i < minimax_order.size(); i++) {
+        //     if (minimax_order[i].id == me.id) {
+        //         choice = choice_node[i];
+        //         cerr << "choice=" << choice << " score=" << choice_value[i] << endl;
+        //     }
+        // }
+        // return choice;
     }
     int minimax(int level, int ind, int alpha, int beta) {
         if (ind == minimax_order.size()) {
@@ -393,6 +376,7 @@ namespace AI {
         int result = aiagent->turn(gameView);
         const auto end_time = chrono::high_resolution_clock::now();
         cerr << "== passed " << chrono::duration<double, milli>(end_time-begin_time).count() << endl;
+        world->send_chatbox(gameView, my_phone);
         return result;
     }
 }
