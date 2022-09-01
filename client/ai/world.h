@@ -2,10 +2,12 @@
 
 #include "shortestpath.h"
 #include "types.h"
+#include "client/client.h"
 #include <bits/stdc++.h>
 
 using namespace std;
 using namespace Types;
+using Phone = Client::Client::Phone;
 
 #define all(x)  begin(x), end(x)
 
@@ -29,6 +31,36 @@ struct WorldAgent{
     }
 };
 
+void log_agent(const HAS::Agent &agent) {
+    cerr << "(";
+    cerr << agent.id() << ", ";
+    cerr << (agent.team() == HAS::Team::FIRST ? "First" : "Second") << ", ";
+    if (agent.type() == HAS::AgentType::POLICE) {
+        cerr << "police";
+    } else if (agent.type() == HAS::AgentType::BATMAN) {
+        cerr << "batman";
+    } else if (agent.type() == HAS::AgentType::THIEF) {
+        cerr << "theif";
+    } else {
+        cerr << "joker";
+    }
+    cerr << ")";
+}
+
+void log_agent(const WorldAgent& agent) {
+    cerr << "(" << agent.id << ", " << agent.node << ", ";
+    if (agent.type == HAS::AgentType::POLICE) {
+        cerr << "police";
+    } else if (agent.type == HAS::AgentType::BATMAN) {
+        cerr << "batman";
+    } else if (agent.type == HAS::AgentType::THIEF) {
+        cerr << "theif";
+    } else {
+        cerr << "joker";
+    }
+    cerr << ") ";
+}
+
 struct World {
     const Graph *graph;
     vector<vector<ShortestPath*>> maps;
@@ -36,6 +68,8 @@ struct World {
     vector<double> edge_cost;
     map<int, WorldAgent> agents;
     int current_turn;
+    int last_message_index = 0;
+    string message_to_send = "";
 
     void initialize(const GameView &gameView, const Graph* g) {
         graph = g;
@@ -136,6 +170,7 @@ struct World {
         update_agent(gameView, gameView.viewer(), turn);
         if (gameView.balance() != agents[gameView.viewer().id()].balance)
             cerr << "balance mismatch! " << gameView.balance() << " " << agents[gameView.viewer().id()].balance << endl; // only when theif dies
+        update_chatbox(gameView);
     }
     const WorldAgent& get_self(const GameView &gameView) {
         return agents[gameView.viewer().id()];
@@ -175,5 +210,65 @@ struct World {
     }
     const vector<Edge>& get_options(int node, int target) {
         return options[target][node];
+    }
+    void update_chatbox(const GameView &gameView) {
+        int turn = gameView.turn().turnnumber();
+        const auto& chatbox = gameView.chatbox();
+        for (; last_message_index < chatbox.size(); last_message_index++) {
+            const auto& chat = chatbox[last_message_index];
+            cerr << "a new message index=" << last_message_index << endl;
+            update_chat(gameView, chat, turn-2);
+        }
+    }
+    void update_chat(const GameView &gameView, const HAS::Chat& chat, int turn) {
+        const auto& text = chat.text();
+        cerr << "update from a chat: text=" << text << " id=" << chat.fromagentid() << endl;
+        if (chat.fromagentid() != get_self(gameView).id)
+            agents[chat.fromagentid()].balance -= text.size();
+        for (int i = 0; i < text.size(); i += 12) {
+            const auto substr = text.substr(i, 12);
+            read_from_text(gameView, text, turn);
+        }
+    }
+    void read_from_text(const GameView &gameView, const string& text, int turn) {
+        bitset<4> bit_id(text, 0, 4);
+        bitset<8> bit_node(text, 4, 8);
+        int agent_id = bit_id.to_ulong();
+        int agent_node = bit_node.to_ulong();
+        if (agents.count(agent_id) && agents[agent_id].last_seen >= turn)
+            return;
+        WorldAgent agent;
+        agent.id = agent_id;
+        if (agent_node == 0) {
+            agent.dead = true;
+        } else {
+            agent.node = agent_node;
+        }
+        agent.team = (gameView.viewer().team() == HAS::FIRST ? HAS::SECOND : HAS::FIRST);
+        agent.type = HAS::THIEF;
+        agents[agent_id] = agent;
+        cerr << "read from chat ";
+        log_agent(agent);
+        cerr << endl;
+    }
+    string write_to_text(WorldAgent const& agent) {
+        bitset<4> bit_id(agent.id);
+        bitset<8> bit_node(agent.dead ? 0 : agent.node);
+        string result = bit_id.to_string() + bit_node.to_string();
+        cerr << "write to chat ";
+        log_agent(agent);
+        cerr << endl;
+        return result;
+    }
+    void send_chat(WorldAgent const& agent) {
+        message_to_send += write_to_text(agent);
+    }
+    void send_chatbox(const GameView &gameView, const Phone* phone) {
+        int id = get_self(gameView).id;
+        if (message_to_send.size() || agents[id].balance >= message_to_send.size()) {
+            phone->send_message(message_to_send);
+            agents[id].balance -= message_to_send.size();
+        }
+        message_to_send = "";
     }
 };

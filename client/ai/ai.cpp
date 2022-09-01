@@ -69,22 +69,6 @@ void redirect_cerr(int id) {
     // freopen("/dev/null", "w", stderr);
 }
 
-void log_agent(const HAS::Agent &agent) {
-    cerr << "(";
-    cerr << agent.id() << ", ";
-    cerr << (agent.team() == HAS::Team::FIRST ? "First" : "Second") << ", ";
-    if (agent.type() == HAS::AgentType::POLICE) {
-        cerr << "police";
-    } else if (agent.type() == HAS::AgentType::BATMAN) {
-        cerr << "batman";
-    } else if (agent.type() == HAS::AgentType::THIEF) {
-        cerr << "theif";
-    } else {
-        cerr << "joker";
-    }
-    cerr << ")";
-}
-
 void log_turn(const GameView &gameView) {
     cerr << "turn=" << gameView.turn().turnnumber() << endl;
 }
@@ -227,26 +211,47 @@ struct AIPolice : AIAgent {
             }
             return selfmap->first[starting_target];
         }
+        // send visible enemies
+        for (const auto& theif : enemies) {
+            if (theif.last_seen == world->current_turn) {
+                world->send_chat(theif);
+            }
+        }
         const auto &polices = world->get_teammates(gameView);
-        if(target_id == -1 || world->agents[target_id].dead){
-            target_id = min_by<WorldAgent,int>(enemies, [&] (WorldAgent const& agent) {
-                int score = 0, node = agent.node;
-                for (const auto &police : polices)
-                    score += world->get_dist(node, police.node, INF);
-                for (int i = 1; i <= graph->n; i++){
-                    int flag = 1;
-                    for(const auto &police : polices){
-                        int thief_dist = world->get_dist(agent, i);
-                        int police_dist = world->get_dist(police, i) + min(2 , (world->current_turn - agent.last_seen) / 2);
-                        if(thief_dist >= police_dist - 1){
-                            flag = 0;
-                        }
+        vector<int> target_options;
+        vector<int> target_scores;
+        for (const auto& agent : enemies) {
+            if (agent.last_seen < world->current_turn - 6)
+                continue;
+            int score = 0, node = agent.node;
+            for (const auto &police : polices)
+                score += world->get_dist(node, police.node, INF);
+            for (int i = 1; i <= graph->n; i++){
+                int flag = 1;
+                for(const auto &police : polices){
+                    int thief_dist = world->get_dist(agent, i);
+                    int police_dist = world->get_dist(police, i) + min(2, (world->current_turn - agent.last_seen) / 2);
+                    if (thief_dist >= police_dist - 1) {
+                        flag = 0;
                     }
-                    score += flag;
                 }
-                cerr << "node=" << node << ", " << "score=" << score << endl;
-                return score;
-            }).id;
+                score += flag;
+            }
+            cerr << "node=" << node << ", " << "score=" << score << endl;
+            target_options.push_back(agent.id);
+            target_scores.push_back(score);
+        }
+        target_id = -1;
+        if (target_options.size()) {
+            int best_ind = argmax(all(target_scores));
+            target_id = target_options[best_ind];
+        }
+        if (target_id == -1) {
+            // gasht
+            // temp random walk
+            int v = world->get_options(me.node)[0].v;
+            cerr << "random walk to=" << v << endl;
+            return v;
         }
         WorldAgent target = world->agents[target_id];
         minimax_order.clear();
@@ -257,17 +262,7 @@ struct AIPolice : AIAgent {
         choice_value.assign(minimax_order.size(), INT_MAX);
         cerr << "minimax: ";
         for (const auto& agent: minimax_order) {
-            cerr << "(" << agent.id << ", " << agent.node << ", ";
-            if (agent.type == HAS::AgentType::POLICE) {
-                cerr << "police";
-            } else if (agent.type == HAS::AgentType::BATMAN) {
-                cerr << "batman";
-            } else if (agent.type == HAS::AgentType::THIEF) {
-                cerr << "theif";
-            } else {
-                cerr << "joker";
-            }
-            cerr << ") ";
+            log_agent(agent);
         }
         cerr << endl;
         minimax(1, 0, INT_MIN, INT_MAX);
@@ -393,6 +388,7 @@ namespace AI {
         int result = aiagent->turn(gameView);
         const auto end_time = chrono::high_resolution_clock::now();
         cerr << "== passed " << chrono::duration<double, milli>(end_time-begin_time).count() << endl;
+        world->send_chatbox(gameView, my_phone);
         return result;
     }
 }
