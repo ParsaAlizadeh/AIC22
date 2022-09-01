@@ -356,8 +356,8 @@ struct AIPolice : AIAgent {
 };
 
 namespace AI {
-    void initialize(const GameView &gameView, const Phone &phone) {
-        my_phone = &phone;
+    void initialize(const GameView &gameView, Phone *phone) {
+        my_phone = phone;
         auto me = gameView.viewer();
         redirect_cerr(me.id());
         log_agent(me);

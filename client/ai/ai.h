@@ -14,7 +14,7 @@ namespace AI {
 
     // for thief, it would get called after get_thief starting node
     // user can use this to initialize itself and save the phone
-    void initialize(const GameView &gameView, const Phone &phone);
+    void initialize(const GameView &gameView, Phone *phone);
 
     int thief_move_ai(const GameView &gameView); // returns to_node_id
     int police_move_ai(const GameView &gameView); // returns to_node_id

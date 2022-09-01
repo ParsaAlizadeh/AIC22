@@ -78,7 +78,16 @@ namespace Client {
             throw_if_error(status);
         }
 
+        void SendMessage(const std::string& message) const override {
+            ChatCommand chatCommand;
+            chatCommand.set_token(token);
+            chatCommand.set_text(message);
+            SendMessage(chatCommand);
+        }
+
     private:
+        mutable Phone* my_phone;
+
         void DeclareReadiness(const int start_node_id) const {
             DeclareReadinessCommand request;
             ClientContext context;
@@ -96,13 +105,6 @@ namespace Client {
             throw_if_error(status);
         }
 
-        void SendMessage(const std::string& message) const override {
-            ChatCommand chatCommand;
-            chatCommand.set_token(token);
-            chatCommand.set_text(message);
-            SendMessage(chatCommand);
-        }
-
         void Move(const MoveCommand &moveCommand) const {
             ClientContext context;
             ::google::protobuf::Empty reply;
@@ -113,7 +115,8 @@ namespace Client {
         void perform_initialize(const GameView &gameView) const {
             const auto &viewer = gameView.viewer();
             int start_node_id;
-            AI::initialize(gameView, Phone(this));
+            my_phone = new Phone(this);
+            AI::initialize(gameView, my_phone);
             if (get_general_type(viewer.type()) == AgentType::THIEF) {
                 start_node_id = AI::get_thief_starting_node(gameView);
             } else {
