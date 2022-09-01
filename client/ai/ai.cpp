@@ -187,30 +187,6 @@ struct AIPolice : AIAgent {
         for(const auto& turn : visible){
             visible_turns.push_back(turn);
         }
-        if (enemies.empty()) {
-            if(starting_target == -1) {
-                mt19937 rng = mt19937(chrono::steady_clock::now().time_since_epoch().count());
-                int cnt_edge = (visible_turns[0] - turn_number) / 2;
-                vector<int> max_dist , options;
-                int min_r = graph->n * 10;
-                max_dist.push_back(min_r);
-                for(int i = 1; i <= graph->n; i++){
-                    max_dist.push_back(-1);
-                    if(selfmap->dist[i] > cnt_edge)
-                        continue;
-                    for(int j = 1; j <= graph->n; j++)
-                        max_dist[i] = max(max_dist[i] , world->get_dist(i, j, INF));
-                    min_r = min(min_r , max_dist[i]);
-                }
-                for(int i = 1; i <= graph->n; i++)
-                    if(max_dist[i] <= min_r + 1)
-                        options.push_back(i);
-                int ind = rng() % options.size();
-                starting_target = options[ind];
-                cerr << "starting target=" << starting_target << ", " << "options=" << options.size() << endl;
-            }
-            return selfmap->first[starting_target];
-        }
         // send visible enemies
         for (const auto& theif : enemies) {
             if (theif.last_seen == world->current_turn) {
@@ -247,12 +223,30 @@ struct AIPolice : AIAgent {
             target_id = target_options[best_ind];
         }
         if (target_id == -1) {
-            // gasht
-            // temp random walk
-            int v = world->get_options(me.node)[0].v;
-            cerr << "random walk to=" << v << endl;
-            return v;
+            if(starting_target == -1 || me.node == starting_target) {
+                mt19937 rng = mt19937(chrono::steady_clock::now().time_since_epoch().count());
+                int cnt_edge = max(3 , (visible_turns[0] - turn_number) / 2);
+                vector<int> max_dist , options;
+                int min_r = graph->n * 10;
+                max_dist.push_back(min_r);
+                for(int i = 1; i <= graph->n; i++){
+                    max_dist.push_back(-1);
+                    if(selfmap->dist[i] > cnt_edge)
+                        continue;
+                    for(int j = 1; j <= graph->n; j++)
+                        max_dist[i] = max(max_dist[i] , world->get_dist(i, j, INF));
+                    min_r = min(min_r , max_dist[i]);
+                }
+                for(int i = 1; i <= graph->n; i++)
+                    if(max_dist[i] <= min_r + 1)
+                        options.push_back(i);
+                int ind = rng() % options.size();
+                starting_target = options[ind];
+                cerr << "starting target=" << starting_target << ", " << "options=" << options.size() << endl;
+            }
+            return selfmap->first[starting_target];
         }
+        starting_target = -1;
         WorldAgent target = world->agents[target_id];
         minimax_order.clear();
         for (const auto& agent: polices)
