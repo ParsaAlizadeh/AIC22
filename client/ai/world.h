@@ -233,7 +233,7 @@ struct World {
     void read_from_text(const GameView &gameView, const string& text, int turn) {
         bitset<4> bit_id(text, 0, 4);
         bitset<8> bit_node(text, 4, 8);
-        int agent_id = bit_id.to_ulong();
+        int agent_id = bit_id.to_ulong() + 1;
         int agent_node = bit_node.to_ulong();
         if (agents.count(agent_id) && agents[agent_id].last_seen >= turn)
             return;
@@ -253,7 +253,7 @@ struct World {
         cerr << endl;
     }
     string write_to_text(WorldAgent const& agent) {
-        bitset<4> bit_id(agent.id);
+        bitset<4> bit_id(agent.id - 1);
         bitset<8> bit_node(agent.dead ? 0 : agent.node);
         string result = bit_id.to_string() + bit_node.to_string();
         cerr << "write to chat ";
