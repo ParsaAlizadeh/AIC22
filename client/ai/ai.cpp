@@ -138,33 +138,56 @@ struct AIThief : AIAgent {
         const auto &me = world->get_self(gameView);
         const auto &enemies = world->get_enemies(gameView);
         const auto &teammates = world->get_teammates(gameView);
+        const auto &visible = gameView.config().turnsettings().visibleturns();
         auto selfmap = get_selfmap(gameView);
         vector<int> police_nodes;
         for (const auto &police : enemies)
             police_nodes.push_back(police.node);
         policemap->update(graph, police_nodes, INF);
+        int next_visible = INT_MAX;
+        for(const auto& turn : visible){
+            if(turn > world->current_turn){
+                next_visible = min(next_visible , turn);
+            }
+        }
+        int cnt_edges = (next_visible - world->current_turn + 1) / 2;
         vector<int> node_options;
         for (int i = 1; i < graph->n; i++) {
-            if (selfmap->dist[i] < policemap->dist[i])
+            if (selfmap->dist[i] <= cnt_edges && selfmap->dist[i] < policemap->dist[i])
                 node_options.push_back(i);
         }
         shuffle(begin(node_options), end(node_options), rng);
         int target = random_max_by<int,int>(rng , node_options, [&] (int node) {
             int score = 0;
+            int police_dist = 0 , teammate_dist = 0 , options = 0 , danger = 0;
             for (const auto &police: enemies){
                 int dist = world->get_dist(node, police.node, INF);
-                score += dist;
+                police_dist += dist;
                 if(dist == 1){
                     score -= 1000 * 1000;
                 }
             }
             for (const auto &thief : teammates)
-                score += world->get_dist(node, thief.node, INF);
-            cerr << "score " << node << " " << score << " ";
+                teammate_dist += world->get_dist(node, thief.node, INF);
             for(int i = 1; i <= graph->n; i++)
                 if(world->get_dist(node, i , me.balance) <= 2)
-                    score++;
-            cerr << score << endl;
+                    options++;
+            int thief_vison = gameView.config().graph().visibleradiusxpolicethief();
+            int joker_vison = gameView.config().graph().visibleradiusypolicejoker();
+            int vision = (me.type == HAS::AgentType::JOKER ? joker_vison : thief_vison);
+            for(const auto &police: enemies){
+                for(int i = 1; i <= graph->n; i++){
+                    if(world->get_dist(police.node, i, INF) < min(3 , cnt_edges)){
+                        if(world->get_dist(i, node, 0) <= vision){
+                            danger++;
+                        }
+                    }
+                }
+            }
+            score = police_dist + teammate_dist + options;// - danger;
+            cerr << "score= " << score << ",police_dist= " << police_dist;
+            cerr << ",teammate_dist= " << teammate_dist << ",options= " << options;
+            cerr << ",danger= " << danger << endl;
             return score;
         });
         return selfmap->first[target];
