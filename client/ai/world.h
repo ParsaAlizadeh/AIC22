@@ -146,7 +146,7 @@ struct World {
             wag.last_seen = turn;
             if (turn == 1) {
                 wag.balance = gameView.balance(); // each agent same balance for start
-                wag.last_seen = 1;
+                wag.last_seen = 2;
             }
             agents[ag.id()] = wag;
         }
