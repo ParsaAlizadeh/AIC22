@@ -286,7 +286,7 @@ struct AIPolice : AIAgent {
                 int next_visible_turn = *upper_bound(all(visible_turns), world->current_turn);
                 int cnt_edges = (next_visible_turn - world->current_turn) / 2;
                 int police_theif_radius = gameView.config().graph().visibleradiusxpolicethief();
-                mt19937 rng = mt19937(SEED / 5 - 3);
+                mt19937 rng = mt19937(SEED / 5 - 3 + next_visible_turn * 4276);
                 cerr << "search targets: " << endl;
                 for (const auto& police : polices) {
                     vector<int> options;
