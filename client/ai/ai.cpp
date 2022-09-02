@@ -192,13 +192,30 @@ struct AIPolice : AIAgent {
                 is_this_visible = true;
         }
         visible_turns.push_back(gameView.config().turnsettings().maxturns() + 1);
+        const auto &polices = world->get_teammates(gameView);
         // send visible enemies
-        for (const auto& theif : enemies) {
-            if (theif.last_seen == world->current_turn) {
-                world->send_chat(gameView, theif);
+        for (const auto& thief : enemies) {
+            if (thief.last_seen < world->current_turn) continue;
+            int sender_id = -1;
+            int radius = (
+                thief.type == HAS::AgentType::THIEF ?
+                gameView.config().graph().visibleradiusxpolicethief() :
+                gameView.config().graph().visibleradiusypolicejoker()
+            );
+            for (const auto& police : polices) {
+                if (world->get_dist(police.node, thief.node, 0) <= radius) {
+                    sender_id = police.id;
+                    break;
+                }
+            }
+            if (sender_id == me.id) {
+                world->send_chat(gameView, thief);
+            } else {
+                cerr << "police with id=" << sender_id << " should report ";
+                log_agent(thief);
+                cerr << " at turn=" << world->current_turn << endl;
             }
         }
-        const auto &polices = world->get_teammates(gameView);
         vector<int> target_options;
         vector<int> target_scores;
         bool target_in_options = false;
