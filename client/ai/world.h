@@ -154,6 +154,7 @@ struct World {
         if (wag.last_seen >= turn)
             return;
         int u = wag.node, v = ag.node_id(), last_seen = wag.last_seen;
+        wag.type = ag.type();
         wag.node = v;
         wag.last_seen = turn;
         wag.dead = ag.is_dead();
