@@ -245,8 +245,13 @@ struct World {
         } else {
             agent.node = agent_node;
         }
-        agent.team = (gameView.viewer().team() == HAS::FIRST ? HAS::SECOND : HAS::FIRST);
-        agent.type = HAS::THIEF;
+        const auto& me = get_self(gameView);
+        agent.team = (me.team == HAS::FIRST ? HAS::SECOND : HAS::FIRST);
+        if (get_general_type(me.type) == HAS::POLICE) {
+            agent.type = (agents.count(agent_id) ? agents[agent_id].type : HAS::THIEF);
+        } else {
+            agent.type = HAS::BATMAN;
+        }
         agent.last_seen = turn;
         agents[agent_id] = agent;
         cerr << "read from chat ";

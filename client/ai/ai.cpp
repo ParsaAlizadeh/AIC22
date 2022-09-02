@@ -140,6 +140,15 @@ struct AIThief : AIAgent {
         const auto &teammates = world->get_teammates(gameView);
         const auto &visible = gameView.config().turnsettings().visibleturns();
         auto selfmap = get_selfmap(gameView);
+        // send batman in chat
+        for (const auto& police : enemies) {
+            if (police.last_seen < world->current_turn)
+                continue;
+            if (police.type != HAS::BATMAN)
+                continue;
+            cerr << "watch batman "; log_agent(police); cerr << endl;
+            world->send_chat(gameView, police);
+        }
         vector<int> police_nodes;
         for (const auto &police : enemies)
             police_nodes.push_back(police.node);
@@ -463,7 +472,9 @@ namespace AI {
     int thief_move_ai(const GameView &gameView) {
         log_turn(gameView);
         world->update(gameView);
-        return aiagent->turn(gameView);
+        int result = aiagent->turn(gameView);
+        world->send_chatbox(gameView, my_phone);
+        return result;
     }
 
     int police_move_ai(const GameView &gameView) {
