@@ -177,17 +177,17 @@ struct AIThief : AIAgent {
             int vision = (me.type == HAS::AgentType::JOKER ? joker_vison : thief_vison);
             for(const auto &police: enemies){
                 for(int i = 1; i <= graph->n; i++){
-                    if(world->get_dist(police.node, i, INF) < min(3 , cnt_edges)){
+                    if(world->get_dist(police.node, i, INF) < min(2 , cnt_edges)){
                         if(world->get_dist(i, node, 0) <= vision){
                             danger++;
                         }
                     }
                 }
             }
-            score = police_dist + teammate_dist + options;// - danger;
-            cerr << "score= " << score << ",police_dist= " << police_dist;
-            cerr << ",teammate_dist= " << teammate_dist << ",options= " << options;
-            cerr << ",danger= " << danger << endl;
+            score = police_dist + teammate_dist + options - danger * (me.type == HAS::AgentType::JOKER ? 1000 : 0);
+            cerr << "score=" << score << ", police_dist=" << police_dist;
+            cerr << ", teammate_dist=" << teammate_dist << ", options=" << options;
+            cerr << ", danger=" << danger << endl;
             return score;
         });
         return selfmap->first[target];
