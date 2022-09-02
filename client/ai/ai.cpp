@@ -175,7 +175,8 @@ struct AIPolice : AIAgent {
     mt19937 rng = mt19937(SEED);
     vector<WorldAgent> minimax_order;
     vector<int> choice_node, choice_value;
-    int starting_target = -1 , target_id = -1;
+    int target_id = -1;
+    int search_target = -1;
 
     int turn(const GameView &gameView) {
         int turn_number = gameView.turn().turnnumber();
@@ -184,9 +185,13 @@ struct AIPolice : AIAgent {
         const auto &me = world->get_self(gameView);
         const auto &enemies = world->get_enemies(gameView);
         auto selfmap = get_selfmap(gameView);
+        bool is_this_visible = false;
         for(const auto& turn : visible){
             visible_turns.push_back(turn);
+            if (turn == world->current_turn)
+                is_this_visible = true;
         }
+        visible_turns.push_back(gameView.config().turnsettings().maxturns() + 1);
         // send visible enemies
         for (const auto& theif : enemies) {
             if (theif.last_seen == world->current_turn) {
@@ -219,34 +224,55 @@ struct AIPolice : AIAgent {
         }
         target_id = -1;
         if (target_options.size()) {
-            int best_ind = argmax(all(target_scores));
-            target_id = target_options[best_ind];
+            // int best_ind = argmax(all(target_scores));
+            target_id = target_options[0];
         }
         if (target_id == -1) {
-            if(starting_target == -1 || me.node == starting_target) {
-                mt19937 rng = mt19937(chrono::steady_clock::now().time_since_epoch().count());
-                int cnt_edge = max(3 , (visible_turns[0] - turn_number) / 2);
-                vector<int> max_dist , options;
-                int min_r = graph->n * 10;
-                max_dist.push_back(min_r);
-                for(int i = 1; i <= graph->n; i++){
-                    max_dist.push_back(-1);
-                    if(selfmap->dist[i] > cnt_edge)
-                        continue;
-                    for(int j = 1; j <= graph->n; j++)
-                        max_dist[i] = max(max_dist[i] , world->get_dist(i, j, INF));
-                    min_r = min(min_r , max_dist[i]);
+            if (search_target == -1 || is_this_visible) {
+                vector<bool> is_on(graph->n + 1);
+                fill(all(is_on), false);
+                int next_visible_turn = *upper_bound(all(visible_turns), world->current_turn);
+                int cnt_edges = (next_visible_turn - world->current_turn) / 2;
+                int police_theif_radius = gameView.config().graph().visibleradiusxpolicethief();
+                mt19937 rng = mt19937(SEED / 5 - 3);
+                cerr << "search targets: " << endl;
+                for (const auto& police : polices) {
+                    vector<int> options;
+                    for (int i = 1; i <= graph->n; i++) {
+                        if (world->get_dist(police, i) <= cnt_edges)
+                            options.push_back(i);
+                    }
+                    vector<int> scores;
+                    for (int node : options) {
+                        int cnt = 0;
+                        for (int i = 1; i <= graph->n; i++) {
+                            if (!is_on[i] && world->get_dist(node, i, 0) <= police_theif_radius) {
+                                cnt++;
+                            }
+                        }
+                        scores.push_back(cnt);
+                    }
+                    int best_ind = -1;
+                    for (int i = 0; i < 30; i++) {
+                        int ind = rng() % options.size();
+                        if (best_ind == -1 || scores[ind] > scores[best_ind]) {
+                            best_ind = ind;
+                        }
+                    }
+                    int node = options[best_ind];
+                    if (police.id == me.id)
+                        search_target = node;
+                    cerr << "search target of police=" << police.id << ", node=" << node << endl;
+                    for (int i = 1; i <= graph->n; i++) {
+                        if (world->get_dist(node, i, 0) <= police_theif_radius)
+                            is_on[i] = true;
+                    }
                 }
-                for(int i = 1; i <= graph->n; i++)
-                    if(max_dist[i] <= min_r + 1)
-                        options.push_back(i);
-                int ind = rng() % options.size();
-                starting_target = options[ind];
-                cerr << "starting target=" << starting_target << ", " << "options=" << options.size() << endl;
             }
-            return selfmap->first[starting_target];
+            cerr << "go to search target node=" << search_target << endl;
+            return selfmap->first[search_target];
         }
-        starting_target = -1;
+        search_target = -1;
         WorldAgent target = world->agents[target_id];
         minimax_order.clear();
         for (const auto& agent: polices)
