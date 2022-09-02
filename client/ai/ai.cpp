@@ -400,10 +400,16 @@ struct AIPolice : AIAgent {
             }
             return beta;
         } else {
-            if (now.last_seen == world->current_turn)
+            if (now.last_seen == world->current_turn) {
+                int cnt_on_theif = 0;
                 for (int i = 0; i < minimax_order.size() - 1; i++)
                     if (now.node == minimax_order[i].node)
-                        return alpha;
+                        cnt_on_theif += 1 + (minimax_order[i].type == HAS::BATMAN);
+                if (now.type == HAS::AgentType::THIEF && cnt_on_theif >= 1)
+                    return alpha;
+                if (now.type == HAS::AgentType::JOKER && cnt_on_theif >= 2)
+                    return alpha;
+            }
             for (const auto& edge : world->get_options(now.node)) {
                 if (edge.price > now.balance)
                     continue;
