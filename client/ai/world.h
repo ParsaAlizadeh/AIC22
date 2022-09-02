@@ -261,14 +261,19 @@ struct World {
         cerr << endl;
         return result;
     }
-    void send_chat(WorldAgent const& agent) {
-        message_to_send += write_to_text(agent);
+    void send_chat(const GameView &gameView, WorldAgent const& agent) {
+        string chat = write_to_text(agent);
+        int id = get_self(gameView).id;
+        if (agents[id].balance >= chat.size()) {
+            agents[id].balance -= chat.size();
+            message_to_send += chat;
+        } else {
+            cerr << "not enough money for send chat" << endl;
+        }
     }
     void send_chatbox(const GameView &gameView, const Phone* phone) {
-        int id = get_self(gameView).id;
-        if (message_to_send.size() || agents[id].balance >= message_to_send.size()) {
+        if (message_to_send.size()) {
             phone->send_message(message_to_send);
-            agents[id].balance -= message_to_send.size();
         }
         message_to_send = "";
     }

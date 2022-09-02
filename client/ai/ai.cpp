@@ -190,7 +190,7 @@ struct AIPolice : AIAgent {
         // send visible enemies
         for (const auto& theif : enemies) {
             if (theif.last_seen == world->current_turn) {
-                world->send_chat(theif);
+                world->send_chat(gameView, theif);
             }
         }
         const auto &polices = world->get_teammates(gameView);
