@@ -201,8 +201,9 @@ struct AIPolice : AIAgent {
         const auto &polices = world->get_teammates(gameView);
         vector<int> target_options;
         vector<int> target_scores;
+        bool target_in_options = false;
         for (const auto& agent : enemies) {
-            if (agent.last_seen < world->current_turn - 6)
+            if (agent.last_seen < world->current_turn - 8)
                 continue;
             int score = 0, node = agent.node;
             for (const auto &police : polices)
@@ -221,11 +222,15 @@ struct AIPolice : AIAgent {
             cerr << "node=" << node << ", " << "score=" << score << endl;
             target_options.push_back(agent.id);
             target_scores.push_back(score);
+            target_in_options |= (agent.id == target_id);
         }
-        target_id = -1;
-        if (target_options.size()) {
-            // int best_ind = argmax(all(target_scores));
-            target_id = target_options[0];
+        if (!target_in_options) {
+            if (target_options.size()) {
+                int best_ind = argmax(all(target_scores));
+                target_id = target_options[best_ind];
+            } else {
+                target_id = -1;
+            }
         }
         if (target_id == -1) {
             if (search_target == -1 || is_this_visible) {
