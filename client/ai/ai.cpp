@@ -162,7 +162,7 @@ struct AIThief : AIAgent {
         int cnt_edges = (next_visible - world->current_turn + 1) / 2;
         vector<int> node_options;
         for (int i = 1; i < graph->n; i++) {
-            if (selfmap->dist[i] <= cnt_edges && selfmap->dist[i] < policemap->dist[i])
+            if ((selfmap->dist[i] <= cnt_edges || me.type == HAS::AgentType::THIEF) && selfmap->dist[i] < policemap->dist[i])
                 node_options.push_back(i);
         }
         shuffle(begin(node_options), end(node_options), rng);
@@ -196,8 +196,8 @@ struct AIThief : AIAgent {
             score = police_dist + teammate_dist + options - danger * (me.type == HAS::AgentType::JOKER ? 1000 : 0);
             int next_node = selfmap->first[node];
             int police_min_dist = policemap->dist[next_node];
-            if (me.type == HAS::AgentType::THIEF) {
-                score += police_min_dist * 1000;
+            if (me.type == HAS::AgentType::THIEF && police_min_dist == 1) {
+                score -= 5000;
             }
             cerr << "score=" << score << ", police_dist=" << police_dist;
             cerr << ", teammate_dist=" << teammate_dist << ", options=" << options;
@@ -341,6 +341,17 @@ struct AIPolice : AIAgent {
             return selfmap->first[search_target];
         }
         search_target = -1;
+        // emergency return if we can reach thief
+        for (const auto& thief : enemies) {
+            if (thief.last_seen < world->current_turn)
+                continue;
+            for (const auto& edge : world->get_options(me.node)) {
+                if (edge.price > me.balance)
+                    continue;
+                if (edge.v == thief.node)
+                    return thief.node;
+            }
+        }
         WorldAgent target = world->agents[target_id];
         minimax_order.clear();
         for (const auto& agent: polices)
