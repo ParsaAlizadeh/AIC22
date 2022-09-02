@@ -111,6 +111,7 @@ struct AIThief : AIAgent {
         for (int i = 1; i < graph->n; i++)
             if (tmpmap->dist[i] >= maxdist - 2)
                 node_options.push_back(i);
+        cerr << "start option size=" << node_options.size() << endl;
         const auto &me = world->get_self(gameView);
         const auto &teammates = world->get_teammates(gameView);
         vector<int> ans;
@@ -198,6 +199,15 @@ struct AIThief : AIAgent {
             int police_min_dist = policemap->dist[next_node];
             if (me.type == HAS::AgentType::THIEF && police_min_dist == 1) {
                 score -= 5000;
+            }
+            if (me.type == HAS::AgentType::JOKER) {
+                int cnt_police_dist_1 = 0;
+                for (const auto& police: enemies) {
+                    if (world->get_dist(police.node, next_node, INF) == 1)
+                        cnt_police_dist_1 += 1 + (police.type == HAS::AgentType::BATMAN);
+                }
+                if (cnt_police_dist_1 >= 2)
+                    score -= 10000;
             }
             cerr << "score=" << score << ", police_dist=" << police_dist;
             cerr << ", teammate_dist=" << teammate_dist << ", options=" << options;
