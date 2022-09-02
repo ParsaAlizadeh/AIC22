@@ -246,6 +246,7 @@ struct World {
         }
         agent.team = (gameView.viewer().team() == HAS::FIRST ? HAS::SECOND : HAS::FIRST);
         agent.type = HAS::THIEF;
+        agent.last_seen = turn;
         agents[agent_id] = agent;
         cerr << "read from chat ";
         log_agent(agent);
