@@ -159,11 +159,11 @@ struct AIThief : AIAgent {
         shuffle(begin(node_options), end(node_options), rng);
         int target = random_max_by<int,int>(rng , node_options, [&] (int node) {
             int score = 0;
-            int police_dist = 0 , teammate_dist = 0 , options = 0 , danger = 0;
+            int police_dist = 0, teammate_dist = 0, options = 0, danger = 0;
             for (const auto &police: enemies){
                 int dist = world->get_dist(node, police.node, INF);
                 police_dist += dist;
-                if(dist == 1){
+                if (dist == 1) {
                     score -= 1000 * 1000;
                 }
             }
@@ -185,9 +185,16 @@ struct AIThief : AIAgent {
                 }
             }
             score = police_dist + teammate_dist + options - danger * (me.type == HAS::AgentType::JOKER ? 1000 : 0);
+            int next_node = selfmap->first[node];
+            int police_min_dist = policemap->dist[next_node];
+            if (me.type == HAS::AgentType::THIEF) {
+                score += police_min_dist * 1000;
+            }
             cerr << "score=" << score << ", police_dist=" << police_dist;
             cerr << ", teammate_dist=" << teammate_dist << ", options=" << options;
-            cerr << ", danger=" << danger << endl;
+            cerr << ", danger=" << danger;
+            cerr << ", police_min_dist=" << police_min_dist;
+            cerr << endl;
             return score;
         });
         return selfmap->first[target];
