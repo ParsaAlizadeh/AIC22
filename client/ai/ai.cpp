@@ -225,13 +225,20 @@ struct AIPolice : AIAgent {
                 gameView.config().graph().visibleradiusxpolicethief() :
                 gameView.config().graph().visibleradiusypolicejoker()
             );
+            bool everyone_see = true;
             for (const auto& police : polices) {
                 if (world->get_dist(police.node, thief.node, 0) <= radius) {
-                    sender_id = police.id;
-                    break;
+                    if (sender_id == -1)
+                        sender_id = police.id;
+                } else {
+                    everyone_see = false;
                 }
             }
-            if (sender_id == me.id) {
+            if (everyone_see) {
+                cerr << "all polices should see ";
+                log_agent(thief);
+                cerr << endl;
+            } else if (sender_id == me.id) {
                 world->send_chat(gameView, thief);
             } else {
                 cerr << "police with id=" << sender_id << " should report ";
